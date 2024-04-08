@@ -12,7 +12,8 @@
     "baseUrl": "./src",
     "paths": {
       "@config": ["./config"],
-      "@modules": ["./modules"]
+      "@modules": ["./modules"],
+      "@client": ["./client"]
     },
     "incremental": true,
     "skipLibCheck": true,

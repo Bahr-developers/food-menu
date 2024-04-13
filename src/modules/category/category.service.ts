@@ -8,14 +8,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Category } from './schemas';
 import { Model, isValidObjectId } from 'mongoose';
 import { Translate, TranslateService } from '../translate';
-import { FilesService } from '../file/file.service';
-
+import { MinioService } from '../../client';
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
     @InjectModel(Translate.name) private readonly translateModel: Model<Translate>,
-    private fileService: FilesService,
+    private minioService: MinioService,
     private readonly service: TranslateService
   ) {}
 
@@ -23,7 +22,7 @@ export class CategoryService {
     await this.#_checkExistingCategory(payload.name);
     await this.checkTranslate(payload.name)
 
-    const file = await this.fileService.createFile(payload.image);    
+    const file = await this.minioService.uploadFile({file:payload.image,bucket: "food-menu"});    
     if(payload.category_id){
       const newCategoriy = await this.categoryModel.create({
         name: payload.name,
@@ -39,7 +38,7 @@ export class CategoryService {
     }else{      
       const newCategoriy = await this.categoryModel.create({
         name: payload.name,
-        image_url:file,
+        image_url:file.fileName,
       });
       newCategoriy.save();
     }
@@ -114,9 +113,9 @@ export class CategoryService {
     
     const deleteImageFile = await this.categoryModel.findById(payload.id)
       
-    await this.fileService.deleteImage(deleteImageFile.image_url)
+    await this.minioService.removeFile({fileName:deleteImageFile.image_url})
     
-    const file = await this.fileService.createFile(payload.image);
+    const file = await this.minioService.uploadFile({file:payload.image,bucket: "food-menu"});
 
     await this.translateModel.findByIdAndUpdate(
       {
@@ -131,7 +130,7 @@ export class CategoryService {
       {_id:payload.id},
       {
         name: payload.name,
-        image_url:file
+        image_url:file.fileName
     });
   }
 
@@ -139,7 +138,7 @@ export class CategoryService {
     await this.#_checkCategory(id);
     const deleteImageFile = await this.categoryModel.findById(id)
     
-    await this.fileService.deleteImage(deleteImageFile.image_url)
+    await this.minioService.removeFile({fileName:deleteImageFile.image_url})
 
     await this.categoryModel.findByIdAndDelete({ _id: id });
   }

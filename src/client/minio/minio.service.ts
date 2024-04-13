@@ -22,6 +22,7 @@ export class MinioService {
   }
 
   async uploadFile(payload: UploadFileRequest): Promise<UploadFileResponse> {
+    
     // Extracting file extension from originalName
     const extension = payload.file.originalname.split('.').at(-1);
 

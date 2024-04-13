@@ -8,14 +8,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Restourant } from './schemas';
 import { Model, isValidObjectId } from 'mongoose';
 import { Translate, TranslateService } from '../translate';
-import { FilesService } from '../file/file.service';
+import { MinioService } from '../../client';
 
 @Injectable()
 export class RestourantService {
   constructor(
     @InjectModel(Restourant.name) private readonly restourantModel: Model<Restourant>,
     @InjectModel(Translate.name) private readonly translateModel: Model<Translate>,
-    private fileService: FilesService,
+    private minioService: MinioService,
     private readonly service: TranslateService
   ) {}
 
@@ -23,7 +23,7 @@ export class RestourantService {
     await this.#_checkExistingRestourant(payload.name);
     await this.checkTranslate(payload.name)
 
-    const file = await this.fileService.createFile(payload.image);    
+    const file = await this.minioService.uploadFile({file:payload.image,bucket: "food-menu"});    
 
     const newRestourant = await this.restourantModel.create({
       name: payload.name,
@@ -81,9 +81,9 @@ export class RestourantService {
     
     const deleteImageFile = await this.restourantModel.findById(payload.id)
       
-    await this.fileService.deleteImage(deleteImageFile.image_url)
+    await this.minioService.removeFile({fileName:deleteImageFile.image_url})
     
-    const file = await this.fileService.createFile(payload.image);
+    const file = await this.minioService.uploadFile({file:payload.image,bucket: "food-menu"});
 
     await this.translateModel.findByIdAndUpdate(
       {
@@ -108,7 +108,7 @@ export class RestourantService {
     await this.#_checkRestourant(id);
     const deleteImageFile = await this.restourantModel.findById(id)
     
-    await this.fileService.deleteImage(deleteImageFile.image_url)
+    await this.minioService.removeFile({fileName:deleteImageFile.image_url})
 
     await this.restourantModel.findByIdAndDelete({ _id: id });
   }

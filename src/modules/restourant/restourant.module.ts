@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { FilesModule } from '../file/file.module';
+import { MinioModule, MinioService } from '../../client';
 import { Language, LanguageSchema } from '../language';
 import { Definition, DefinitionSchema, Translate, TranslateSchema, TranslateService } from '../translate';
 import { RestourantController } from './restourant.controller';
@@ -14,11 +14,11 @@ import { Restourant, RestourantSchema } from './schemas';
       { name: Restourant.name, schema: RestourantSchema },
       { name: Translate.name, schema: TranslateSchema },
       { name: Definition.name, schema: DefinitionSchema },
-      { name: Language.name, schema: LanguageSchema }
+      { name: Language.name, schema: LanguageSchema },
     ]),
-    FilesModule,
+    MinioModule,
   ],
   controllers: [RestourantController],
-  providers: [RestourantService, TranslateService],
+  providers: [RestourantService, TranslateService, MinioService],
 })
 export class RestourantModule {}

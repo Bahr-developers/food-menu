@@ -7,12 +7,12 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Food } from './schemas';
 import { Model, isValidObjectId } from 'mongoose';
 import { Definition, Translate, TranslateService } from '../translate';
-import { FilesService } from '../file/file.service';
 import { CreateFoodInterface, UpdateFoodRequest } from './interfaces';
 import { Category } from '../category/schemas';
 import { Restourant } from '../restourant/schemas';
 import {v4 as uuidv4} from 'uuid';
 import { Language } from '../language';
+import { MinioService } from '../../client';
 
 @Injectable()
 export class FoodService {
@@ -23,7 +23,7 @@ export class FoodService {
     @InjectModel(Restourant.name) private readonly restourantModel: Model<Restourant>,
     @InjectModel(Language.name) private readonly languageModel: Model<Language>,
     @InjectModel(Definition.name) private readonly definitionModel: Model<Definition>,
-    private fileService: FilesService,
+    private minioService: MinioService,
     private readonly service: TranslateService
   ) {}
 
@@ -47,9 +47,12 @@ export class FoodService {
     const translate_name = await this.service.createTranslate({code:uuidv4(), definition:name, type:"content"})
     const translate_description = await this.service.createTranslate({code:uuidv4(), definition:description, type:"content"})
         
+    const files = []
 
-    const files = await Promise.all(payload.images.map(photo => this.fileService.createFile(photo)));
-        
+    for(let photo of payload.images){
+        const fileNames = await this.minioService.uploadFile({file:photo, bucket: "food-menu"})
+        files.push(fileNames.fileName)
+    }            
 
     const newFood = await this.foodModel.create({
       name: translate_name,
@@ -121,10 +124,15 @@ export class FoodService {
       const deleteImageFile = await this.foodModel.findById(payload.id)
       
       for(let photo of deleteImageFile.image_urls){
-        await this.fileService.deleteImage(photo)
+        await this.minioService.removeFile({fileName: photo})
       }
       
-      const files = await Promise.all(payload.images.map(photo => this.fileService.createFile(photo)));
+      const files = []
+
+      for(let photo of payload.images){
+          const fileNames = await this.minioService.uploadFile({file:photo, bucket: "food-menu"})
+          files.push(fileNames.fileName)
+      }  
       await this.foodModel.findByIdAndUpdate(
         {_id:payload.id},
         {
@@ -213,7 +221,7 @@ export class FoodService {
     await this.#_checkFood(id);
     const deleteImageFile = await this.foodModel.findById(id)
     for(let photo of deleteImageFile.image_urls){
-      await this.fileService.deleteImage(photo)
+      await this.minioService.removeFile({fileName: photo})
     }
 
     await this.foodModel.findByIdAndDelete({ _id: id });

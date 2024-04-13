@@ -1,0 +1,5 @@
+export * from './create-translate.interfaces'
+export * from './get-single-translate.interfaces'
+export * from './update-translate.interfaces'
+export * from './definition-update.interfaces'
+export * from './get-single-translate-bycode.interface'

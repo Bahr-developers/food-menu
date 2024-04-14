@@ -4,6 +4,6 @@ declare interface AppConfigOptions {
 }
 
 export const appConfig: AppConfigOptions = {
-  port: parseInt(process.env.APP_PORT, 10) || 4000,
+  port: parseInt(process.env.APP_PORT, 10) || 1011,
   host: process.env.APP_HOST,
 };

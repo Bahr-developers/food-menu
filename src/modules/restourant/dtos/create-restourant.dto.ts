@@ -28,6 +28,5 @@ export class CreateRestourantDto implements CreateRestourantInterface {
     type: 'string',
     format: 'binary',
   })
-  @IsString()
   image: any;
 }

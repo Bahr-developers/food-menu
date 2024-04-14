@@ -28,6 +28,5 @@ export class UpdateRestourantDto {
     format: 'binary',
   })
   @IsOptional()
-  @IsString()
   image: any;
 }

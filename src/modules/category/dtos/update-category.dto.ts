@@ -22,6 +22,5 @@ export class UpdateCategoryDto {
     required: false,
   })
   @IsOptional()
-  @IsString()
   image?: any;
 }

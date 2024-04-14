@@ -14,7 +14,6 @@ export class CreateCategoryDto implements CreateCategoryInterface {
     type: 'string',
     format: 'binary',
   })
-  @IsString()
   image: any;
 
   @ApiProperty({

@@ -3,6 +3,7 @@ import { AppModule } from './app';
 import { appConfig } from '@config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { json } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,6 +11,8 @@ async function bootstrap() {
   app.enableCors({
     origin:"*"
   })
+
+  app.use(json({ limit: '1024mb' }));
 
   app.useGlobalPipes(new ValidationPipe());
 

@@ -1,4 +1,7 @@
-import { CreateRestourantInterface, UpdateRestourantRequest } from './interfaces';
+import {
+  CreateRestourantInterface,
+  UpdateRestourantRequest,
+} from './interfaces';
 import {
   ConflictException,
   Injectable,
@@ -13,23 +16,28 @@ import { MinioService } from '../../client';
 @Injectable()
 export class RestourantService {
   constructor(
-    @InjectModel(Restourant.name) private readonly restourantModel: Model<Restourant>,
-    @InjectModel(Translate.name) private readonly translateModel: Model<Translate>,
+    @InjectModel(Restourant.name)
+    private readonly restourantModel: Model<Restourant>,
+    @InjectModel(Translate.name)
+    private readonly translateModel: Model<Translate>,
     private minioService: MinioService,
-    private readonly service: TranslateService
+    private readonly service: TranslateService,
   ) {}
 
   async createRestourant(payload: CreateRestourantInterface): Promise<void> {
     await this.#_checkExistingRestourant(payload.name);
-    await this.checkTranslate(payload.name)
+    await this.checkTranslate(payload.name);
 
-    const file = await this.minioService.uploadFile({file:payload.image,bucket: "food-menu"});    
+    const file = await this.minioService.uploadFile({
+      file: payload.image,
+      bucket: 'food-menu',
+    });
 
     const newRestourant = await this.restourantModel.create({
       name: payload.name,
       description: payload.description,
       location: payload.location,
-      image_url:file.fileName
+      image_url: file.fileName,
     });
 
     await this.translateModel.findByIdAndUpdate(
@@ -39,51 +47,57 @@ export class RestourantService {
       {
         status: 'active',
       },
-    )
+    );
     newRestourant.save();
   }
 
-  async getRestourantList(languageCode:string): Promise<Restourant[]> {
-    const data =  await this.restourantModel
+  async getRestourantList(languageCode: string): Promise<Restourant[]> {
+    const data = await this.restourantModel
       .find()
       .select('name description location image_url')
       .exec();
 
-    let result = []
-    for(let x of data){
+    let result = [];
+    for (let x of data) {
       const name_request = {
-        translateId:x.name.toString(),
-        languageCode:languageCode
-      }
+        translateId: x.name.toString(),
+        languageCode: languageCode,
+      };
 
       const description_request = {
-        translateId:x.description.toString(),
-        languageCode:languageCode
-      }
+        translateId: x.description.toString(),
+        languageCode: languageCode,
+      };
 
-      const location_request = {
-        translateId:x.location.toString(),
-        languageCode:languageCode
-      }
-      
-      const translated_name = await this.service.getSingleTranslate(name_request)            
-      const translated_description = await this.service.getSingleTranslate(description_request)            
-      const translated_location = await this.service.getSingleTranslate(location_request)            
-      result.push({id:x._id, name:translated_name.value, description:translated_description.value, image_url:x.image_url , location:translated_location.value})
+      const translated_name = await this.service.getSingleTranslate(
+        name_request,
+      );
+      const translated_description = await this.service.getSingleTranslate(
+        description_request,
+      );
+      result.push({
+        id: x._id,
+        name: translated_name.value,
+        description: translated_description.value,
+        image_url: x.image_url,
+        location: x.location,
+      });
     }
-     return result
+    return result;
   }
 
   async updateRestourant(payload: UpdateRestourantRequest): Promise<void> {
     await this.#_checkRestourant(payload.id);
-    await this.checkTranslate(payload.name)
-    
-    
-    const deleteImageFile = await this.restourantModel.findById(payload.id)
-      
-    await this.minioService.removeFile({fileName:deleteImageFile.image_url})
-    
-    const file = await this.minioService.uploadFile({file:payload.image,bucket: "food-menu"});
+    await this.checkTranslate(payload.name);
+
+    const deleteImageFile = await this.restourantModel.findById(payload.id);
+
+    await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
+
+    const file = await this.minioService.uploadFile({
+      file: payload.image,
+      bucket: 'food-menu',
+    });
 
     await this.translateModel.findByIdAndUpdate(
       {
@@ -92,23 +106,24 @@ export class RestourantService {
       {
         status: 'active',
       },
-    )
+    );
 
     await this.restourantModel.findByIdAndUpdate(
-      {_id:payload.id},
+      { _id: payload.id },
       {
         name: payload.name,
         description: payload.description,
         location: payload.location,
-        image_url:file.fileName
-    });
+        image_url: file.fileName,
+      },
+    );
   }
 
   async deleteRestourant(id: string): Promise<void> {
     await this.#_checkRestourant(id);
-    const deleteImageFile = await this.restourantModel.findById(id)
-    
-    await this.minioService.removeFile({fileName:deleteImageFile.image_url})
+    const deleteImageFile = await this.restourantModel.findById(id);
+
+    await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
 
     await this.restourantModel.findByIdAndDelete({ _id: id });
   }

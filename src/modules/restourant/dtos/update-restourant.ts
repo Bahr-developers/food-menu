@@ -1,4 +1,4 @@
-import { IsObject, IsString, IsEnum } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateRestourantDto {
@@ -22,4 +22,12 @@ export class UpdateRestourantDto {
   })
   @IsString()
   location?: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+  })
+  @IsOptional()
+  @IsString()
+  image: any;
 }

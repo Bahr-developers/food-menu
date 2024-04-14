@@ -1,8 +1,8 @@
-import { IsObject, IsString, IsEnum } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateFoodInterface, UpdateFoodRequest } from '../interfaces';
+import { UpdateFoodRequest } from '../interfaces';
 
-export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id' | 'images'> {
+export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
   @ApiProperty({
     example: '660d5290e49538271705501e',
     required: true,
@@ -23,4 +23,14 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id' | 'images'> {
   })
   @IsString()
   price?: string;
+
+  @ApiProperty({
+    isArray: true,
+    maxItems: 8,
+    type: 'array',
+    format: 'binary',
+  })
+  @IsOptional()
+  @IsArray()
+  images?: any;
 }

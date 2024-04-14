@@ -14,8 +14,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('Restourant')
-    .setDescription('The Restourant API description')
+    .setTitle('Restaurant')
+    .setDescription('The Restaurant API description')
     .setVersion('1.0')
     .addBearerAuth(
       {

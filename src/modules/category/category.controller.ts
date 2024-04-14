@@ -10,7 +10,7 @@ import {
     UseInterceptors,
     UploadedFile
   } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CreateCategoryDto, UpdateCategoryDto } from './dtos';
 import { Category } from './schemas';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -28,6 +28,15 @@ import { CategoryService } from './category.service';
       this.#_categoryService = restourant;
     }
   
+    
+    @Get('find/all')
+    async getCategoryList(
+      @Headers('accept-language') languageCode: string
+    ): Promise<Category[]> {
+      return await this.#_categoryService.getCategoryList(languageCode);
+    }
+    
+    @ApiConsumes("multipart/form-data")
     @Post('add')
     @UseInterceptors(FileInterceptor('image'))
     createCategory(
@@ -37,14 +46,7 @@ import { CategoryService } from './category.service';
       return this.#_categoryService.createCategory({...payload, image});
     }
 
-    @Get('find/all')
-    async getCategoryList(
-      @Headers('accept-language') languageCode: string
-      ): Promise<Category[]> {
-        return await this.#_categoryService.getCategoryList(languageCode);
-    }
-
-
+    @ApiConsumes("multipart/form-data")
     @Patch('edit/:id')
     @UseInterceptors(FileInterceptor('image'))
     async updateCategory(

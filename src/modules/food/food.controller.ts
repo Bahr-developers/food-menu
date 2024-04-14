@@ -10,7 +10,7 @@ import {
     UseInterceptors,
     UploadedFiles
   } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Food } from './schemas';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { FoodService } from './food.service';
@@ -28,6 +28,14 @@ import { CreateFoodDto, UpdateFoodDto } from './dtos';
       this.#_foodService = food;
     }
   
+    @Get('find/all')
+    async getServiceList(
+      @Headers('accept-language') languageCode: string
+    ): Promise<Food[]> {
+      return await this.#_foodService.getFoodList(languageCode);
+    }
+    
+    @ApiConsumes("multipart/form-data")
     @Post('add')
     @UseInterceptors(FilesInterceptor('images'))
     createProject(
@@ -37,13 +45,7 @@ import { CreateFoodDto, UpdateFoodDto } from './dtos';
       return this.#_foodService.createFood({...payload, images});
     }
 
-    @Get('find/all')
-    async getServiceList(
-      @Headers('accept-language') languageCode: string
-      ): Promise<Food[]> {
-        return await this.#_foodService.getFoodList(languageCode);
-    }
-
+    @ApiConsumes("multipart/form-data")
     @Patch('edit/:id')
     @UseInterceptors(FilesInterceptor('images'))
     async updateFood(

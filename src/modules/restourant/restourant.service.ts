@@ -29,7 +29,7 @@ export class RestourantService {
       name: payload.name,
       description: payload.description,
       location: payload.location,
-      image_url:file
+      image_url:file.fileName
     });
 
     await this.translateModel.findByIdAndUpdate(
@@ -100,7 +100,7 @@ export class RestourantService {
         name: payload.name,
         description: payload.description,
         location: payload.location,
-        image_url:file
+        image_url:file.fileName
     });
   }
 

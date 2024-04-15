@@ -51,7 +51,7 @@ import { CreateFoodDto, UpdateFoodDto } from './dtos';
     async updateFood(
       @Param('id') projectId: string,
       @Body() payload: UpdateFoodDto,
-      @UploadedFiles() images: any[]
+      @UploadedFiles() images: any
     ): Promise<void> {
       await this.#_foodService.updateFood({ ...payload, id: projectId, images });
     }

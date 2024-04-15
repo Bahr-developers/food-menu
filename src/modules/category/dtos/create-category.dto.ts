@@ -22,4 +22,11 @@ export class CreateCategoryDto implements CreateCategoryInterface {
   @IsString()
   @IsOptional()
   category_id?: string;
+
+  @ApiProperty({
+    example: '660d5290e49538271705501e',
+    required: true,
+  })
+  @IsString()
+  restaurant_id: string;
 }

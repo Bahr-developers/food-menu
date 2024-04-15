@@ -6,6 +6,7 @@ import { Definition, DefinitionSchema, Translate, TranslateSchema, TranslateServ
 import { CategoryController } from './category.controller';
 import { CategoryService } from './category.service';
 import { Category, CategorySchema } from './schemas';
+import { Restourant, RestourantSchema } from 'modules/restourant/schemas';
 
 
 @Module({
@@ -14,7 +15,8 @@ import { Category, CategorySchema } from './schemas';
       { name: Category.name, schema: CategorySchema },
       { name: Translate.name, schema: TranslateSchema },
       { name: Definition.name, schema: DefinitionSchema },
-      { name: Language.name, schema: LanguageSchema }
+      { name: Language.name, schema: LanguageSchema },
+      {name: Restourant.name, schema: RestourantSchema}
     ]),
     MinioModule,
   ],

@@ -13,8 +13,10 @@ export class CreateCategoryDto implements CreateCategoryInterface {
   @ApiProperty({
     type: 'string',
     format: 'binary',
+    required:false
   })
-  image: any;
+  @IsOptional()
+  image?: any;
 
   @ApiProperty({
     required: false,

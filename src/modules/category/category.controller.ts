@@ -46,6 +46,17 @@ export class CategoryController {
     );
   }
 
+  @Get('find/by/restaurant/admin/:restaurantId')
+  async getCategoryListByRestaurantIdForAdmins(
+    @Headers('accept-language') languageCode: string,
+    @Param('restaurantId') restaurantId: string,
+  ): Promise<Category[]> {
+    return await this.#_categoryService.getCategoryListByRestaurantIdForAdmins(
+      languageCode,
+      restaurantId,
+    );
+  }
+
   @ApiConsumes('multipart/form-data')
   @Post('add')
   @UseInterceptors(FileInterceptor('image'))

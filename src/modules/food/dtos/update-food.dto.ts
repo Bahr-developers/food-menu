@@ -7,6 +7,10 @@ enum food_status {
   none = 'none',
   preparing = 'preparing'
 }
+enum status {
+  active = 'active',
+  inactive = 'inactive'
+}
 
 export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
   @ApiProperty({
@@ -14,6 +18,7 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
     required: true,
   })
   @IsString()
+  @IsOptional()
   name?: object;
 
   @ApiProperty({
@@ -21,6 +26,7 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
     required: true,
   })
   @IsString()
+  @IsOptional()
   description?: object;
 
   @ApiProperty({
@@ -28,6 +34,7 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
     required: true,
   })
   @IsString()
+  @IsOptional()
   price?: string;
 
   @ApiProperty({
@@ -42,9 +49,17 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
 
   @ApiProperty({
     examples: ['available', 'none', 'preparing'],
-    required: true,
   })
   @IsEnum(food_status)
+  @IsOptional()
   @IsString()
   food_status?: 'available' | 'none' | "preparing";
+
+  @ApiProperty({
+    examples: ['active', 'inactive'],
+  })
+  @IsOptional()
+  @IsEnum(status)
+  @IsString()
+  status!: 'active' | 'inactive';
 }

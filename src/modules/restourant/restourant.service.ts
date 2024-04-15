@@ -125,6 +125,14 @@ export class RestourantService {
 
     await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
 
+    await this.translateModel.findByIdAndUpdate(
+      {
+        _id: deleteImageFile.name,
+      },
+      {
+        status: 'inactive',
+      },
+    );
     await this.restourantModel.findByIdAndDelete({ _id: id });
   }
 

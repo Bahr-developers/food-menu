@@ -5,4 +5,5 @@ export declare interface UpdateFoodRequest {
   price?: string;
   images?: any;
   food_status?: 'available' | 'none' | 'preparing';
+  status?: 'active' | 'inactive';
 }

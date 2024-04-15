@@ -9,10 +9,10 @@ export type CategoryDocument = HydratedDocument<Category>;
 @Schema({ versionKey: false })
 export class Category {
   @Prop({ type: Types.UUID, ref: 'Translate', required: true })
-  name: Translate[];
+  name: string;
 
-  @Prop({ type: String, required: true })
-  image_url: string;
+  @Prop({ type: String, required: false })
+  image_url?: string;
 
   @Prop({ type: SchemaTypes.ObjectId, ref: Category.name })
   category_id?: Types.ObjectId;

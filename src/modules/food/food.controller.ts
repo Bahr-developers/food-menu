@@ -8,7 +8,8 @@ import {
     Delete,
     Headers,
     UseInterceptors,
-    UploadedFiles
+    UploadedFiles,
+    Query
   } from '@nestjs/common';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Food } from './schemas';
@@ -33,6 +34,15 @@ import { CreateFoodDto, UpdateFoodDto } from './dtos';
       @Headers('accept-language') languageCode: string
     ): Promise<Food[]> {
       return await this.#_foodService.getFoodList(languageCode);
+    }
+  
+    @Get('search')
+    async searchFood(
+      @Headers('accept-language') languageCode: string,
+      @Query('name') name: string,
+      @Body('restourant_id') restourant_id:string
+    ): Promise<Food[]> {
+      return await this.#_foodService.searchFood({name, restourant_id, languageCode});
     }
     
     @ApiConsumes("multipart/form-data")

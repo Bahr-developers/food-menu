@@ -13,6 +13,7 @@ import { Restourant } from '../restourant/schemas';
 import {v4 as uuidv4} from 'uuid';
 import { Language } from '../language';
 import { MinioService } from '../../client';
+import { SearchFoodInterface } from './interfaces/search-food.interface';
 
 @Injectable()
 export class FoodService {
@@ -28,7 +29,6 @@ export class FoodService {
   ) {}
 
   async createFood(payload: CreateFoodInterface): Promise<void> {
-    console.log(payload.images);
     
     await this.#_checkCategory(payload.category_id)
     await this.#_checkRestourant(payload.restourant_id)
@@ -88,15 +88,43 @@ export class FoodService {
     newFood.save();
   }
 
+  async searchFood(payload: SearchFoodInterface): Promise<Food[]> {
+    const data =  await this.foodModel
+    .find({status:"active"})
+    .select('name description image_urls price food_status, restourant_id')
+    .exec();
+    
+    let result = []
+    for(let food of data){
+      const name_request = {
+        translateId:food.name.toString(),
+        languageCode:payload.languageCode
+      }
+      const translated_name = await this.service.getSingleTranslate(name_request)  
+      
+      if(payload.restourant_id==food.restourant_id.toString() && payload.name == translated_name.value.toString()){
+      
+        const desription_request = {
+          translateId:food.description.toString(),
+          languageCode:payload.languageCode
+      }
+      
+      const translated_description = await this.service.getSingleTranslate(desription_request) 
+      result.push({id:food._id, name:translated_name.value, description:translated_description.value, image_urls:food.image_urls , price: food.price, food_status:food.food_status})
+    }
+  }
+  return result
+}
+
   async getFoodList(languageCode:string): Promise<Food[]> {
     const data =  await this.foodModel
       .find()
       .select('name description image_urls price, food_status')
       .exec();
-
-      
-      let result = []
-      for(let x of data){
+    
+    
+    let result = []
+    for(let x of data){
         
         const name_request = {
           translateId:x.name.toString(),
@@ -141,11 +169,20 @@ export class FoodService {
           image_urls:files,
         });
       }
+      
       if(payload.food_status){
         await this.foodModel.findByIdAndUpdate(
           {_id:payload.id},
           {
             food_status:payload.food_status,
+          });
+      }
+
+      if(payload.status){
+        await this.foodModel.findByIdAndUpdate(
+          {_id:payload.id},
+          {
+            status:payload.status,
           });
       }
 
@@ -232,6 +269,25 @@ export class FoodService {
     for(let photo of deleteImageFile.image_urls){
       await this.minioService.removeFile({fileName: photo})
     }
+    
+        await this.translateModel.findByIdAndUpdate(
+          {
+            _id: deleteImageFile.name,
+          },
+          {
+            status: 'inactive',
+          },
+        );
+    
+        await this.translateModel.findByIdAndUpdate(
+          {
+            _id: deleteImageFile.description,
+          },
+          {
+            status: 'inactive',
+          },
+        );
+    await this.categoryModel.findByIdAndDelete({ _id: id });
 
     await this.foodModel.findByIdAndDelete({ _id: id });
   }

@@ -1,6 +1,12 @@
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UpdateFoodRequest } from '../interfaces';
+
+enum food_status {
+  available = 'available',
+  none = 'none',
+  preparing = 'preparing'
+}
 
 export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
   @ApiProperty({
@@ -33,4 +39,12 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
   @IsOptional()
   @IsArray()
   images?: any;
+
+  @ApiProperty({
+    examples: ['available', 'none', 'preparing'],
+    required: true,
+  })
+  @IsEnum(food_status)
+  @IsString()
+  food_status?: 'available' | 'none' | "preparing";
 }

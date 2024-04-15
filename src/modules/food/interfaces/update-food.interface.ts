@@ -4,4 +4,5 @@ export declare interface UpdateFoodRequest {
   description?: object;
   price?: string;
   images?: any;
+  food_status?: 'available' | 'none' | 'preparing';
 }

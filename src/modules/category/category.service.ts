@@ -35,7 +35,7 @@ export class CategoryService {
     if (payload.category_id) {
       const newCategoriy = await this.categoryModel.create({
         name: payload.name,
-        image_url: file,
+        image_url: file.fileName,
         restaurant_id: payload.restaurant_id,
         category_id: payload.category_id,
       });
@@ -67,7 +67,7 @@ export class CategoryService {
   async getCategoryList(languageCode: string): Promise<Category[]> {
     const data = await this.categoryModel
       .find()
-      .select('name image_url category_id')
+      .select('name image_url category_id, food_status')
       .populate({
         path: 'subcategories',
         populate: {

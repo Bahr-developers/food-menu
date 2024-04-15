@@ -3,6 +3,7 @@ import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { Category } from '../../category/schemas';
 import { Restourant } from '../../restourant/schemas';
 import { Translate } from '../../translate';
+const food_status = ['available', 'none', 'preparing'];
 
 export type FoodDocument = HydratedDocument<Food>;
 
@@ -22,6 +23,9 @@ export class Food {
 
     @Prop({ type: SchemaTypes.ObjectId, ref: Category.name })
     category_id: Types.ObjectId;
+
+    @Prop({ enum: food_status, default: 'available' })
+    food_status: string;
 
     @Prop({type:Types.UUID, ref: "Restourant", required: true })
     restourant_id: Restourant[]

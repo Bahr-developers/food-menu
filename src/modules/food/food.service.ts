@@ -28,6 +28,8 @@ export class FoodService {
   ) {}
 
   async createFood(payload: CreateFoodInterface): Promise<void> {
+    console.log(payload.images);
+    
     await this.#_checkCategory(payload.category_id)
     await this.#_checkRestourant(payload.restourant_id)
     
@@ -89,7 +91,7 @@ export class FoodService {
   async getFoodList(languageCode:string): Promise<Food[]> {
     const data =  await this.foodModel
       .find()
-      .select('name description image_urls price')
+      .select('name description image_urls price, food_status')
       .exec();
 
       
@@ -108,7 +110,7 @@ export class FoodService {
       
       const translated_name = await this.service.getSingleTranslate(name_request)  
       const translated_description = await this.service.getSingleTranslate(desription_request)          
-      result.push({id:x._id, name:translated_name.value, description:translated_description.value, image_urls:x.image_urls , price: x.price})
+      result.push({id:x._id, name:translated_name.value, description:translated_description.value, image_urls:x.image_urls , price: x.price, food_status:x.food_status})
     }
     return result
   }
@@ -139,7 +141,14 @@ export class FoodService {
           image_urls:files,
         });
       }
-      
+      if(payload.food_status){
+        await this.foodModel.findByIdAndUpdate(
+          {_id:payload.id},
+          {
+            food_status:payload.food_status,
+          });
+      }
+
       if(payload.name){
         for(let languageCode of name_kays_array){
           await this.#_checkLanguage(languageCode)

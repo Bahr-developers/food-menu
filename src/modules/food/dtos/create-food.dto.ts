@@ -38,7 +38,7 @@ export class CreateFoodDto implements CreateFoodInterface {
 
   @ApiProperty({
     maxItems: 8,
-    type: 'array',
+    type: "string",
     format: 'binary',
   })
   images: any;

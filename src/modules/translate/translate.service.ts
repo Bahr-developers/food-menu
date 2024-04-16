@@ -41,7 +41,7 @@ export class TranslateService {
       .exec();
   }
 
-  async createTranslate(payload: CreateTranslateInterface): Promise<String> {
+  async createTranslate(payload: CreateTranslateInterface): Promise<string> {
     await this.#_checkExistingTranslate(payload.code);
 
     for (const code of Object.keys(payload.definition)) {
@@ -115,7 +115,7 @@ export class TranslateService {
     };
   }
 
-  async updateTranslate(payload: UpdateTranslateRequest): Promise<String> {
+  async updateTranslate(payload: UpdateTranslateRequest): Promise<string> {
     await this.#_checkTranslate(payload.id);
     const foundedTranslate = await this.translateModel.findById(payload.id);
 

@@ -18,7 +18,7 @@ export class CreateRestourantDto implements CreateRestourantInterface {
   description: string;
 
   @ApiProperty({
-    example: '660d5290e49538271705501e',
+    example: 'Toshkent, Yunusobod',
     required: true,
   })
   @IsString()

@@ -1,5 +1,5 @@
 import { CreateCategoryInterface } from '../interfaces';
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCategoryDto implements CreateCategoryInterface {

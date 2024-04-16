@@ -5,43 +5,46 @@ import { UpdateFoodRequest } from '../interfaces';
 enum food_status {
   available = 'available',
   none = 'none',
-  preparing = 'preparing'
+  preparing = 'preparing',
 }
 enum status {
   active = 'active',
-  inactive = 'inactive'
+  inactive = 'inactive',
 }
 
 export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
   @ApiProperty({
-    example: '660d5290e49538271705501e',
-    required: true,
+    example: '{ "uz": "salom", "en": "salom"}',
+    required: false,
   })
   @IsString()
   @IsOptional()
   name?: object;
 
   @ApiProperty({
-    example: "660d5290e49538271705501e",
-    required: true,
+    example: '{ "uz": "salom", "en": "salom"}',
+    required: false,
   })
   @IsString()
   @IsOptional()
   description?: object;
 
   @ApiProperty({
-    example: "100$",
-    required: true,
+    example: '10000',
+    required: false,
   })
   @IsString()
   @IsOptional()
   price?: string;
 
   @ApiProperty({
-    isArray: true,
     maxItems: 8,
     type: 'array',
-    format: 'binary',
+    items: {
+      format: 'binary',
+      type: 'string',
+    },
+    required: false,
   })
   @IsOptional()
   @IsArray()
@@ -49,14 +52,16 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
 
   @ApiProperty({
     examples: ['available', 'none', 'preparing'],
+    required: false,
   })
   @IsEnum(food_status)
   @IsOptional()
   @IsString()
-  food_status?: 'available' | 'none' | "preparing";
+  food_status?: 'available' | 'none' | 'preparing';
 
   @ApiProperty({
     examples: ['active', 'inactive'],
+    required: false,
   })
   @IsOptional()
   @IsEnum(status)

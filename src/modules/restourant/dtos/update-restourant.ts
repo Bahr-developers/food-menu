@@ -19,7 +19,7 @@ export class UpdateRestourantDto {
   description?: string;
 
   @ApiProperty({
-    example: '660d5290e49538271705501e',
+    example: 'Toshkent, Yunusobod',
     required: false,
   })
   @IsString()
@@ -29,7 +29,8 @@ export class UpdateRestourantDto {
   @ApiProperty({
     type: 'string',
     format: 'binary',
+    required: false
   })
   @IsOptional()
-  image: any;
+  image?: any;
 }

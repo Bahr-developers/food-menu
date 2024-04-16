@@ -4,19 +4,19 @@ import { CreateFoodInterface } from '../interfaces';
 
 export class CreateFoodDto implements CreateFoodInterface {
   @ApiProperty({
-    example: '660d5290e49538271705501e',
+    example: '{ "uz": "salom", "en": "salom"}',
     required: true,
   })
   name: object;
 
   @ApiProperty({
-    example: '660d5290e49538271705501e',
+    example: '{ "uz": "salom", "en": "salom"}',
     required: true,
   })
   description: object;
 
   @ApiProperty({
-    example: '100$',
+    example: '12000',
     required: true,
   })
   @IsString()
@@ -39,7 +39,10 @@ export class CreateFoodDto implements CreateFoodInterface {
   @ApiProperty({
     maxItems: 8,
     type: 'array',
-    format: 'binary',
+    items: {
+      format: 'binary',
+      type: 'string',
+    },
   })
   images: any;
 }

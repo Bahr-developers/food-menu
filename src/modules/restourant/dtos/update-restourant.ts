@@ -7,6 +7,7 @@ export class UpdateRestourantDto {
     required: false,
   })
   @IsString()
+  @IsOptional()
   name?: string;
 
   @ApiProperty({
@@ -14,6 +15,7 @@ export class UpdateRestourantDto {
     required: false,
   })
   @IsString()
+  @IsOptional()
   description?: string;
 
   @ApiProperty({
@@ -21,6 +23,7 @@ export class UpdateRestourantDto {
     required: false,
   })
   @IsString()
+  @IsOptional()
   location?: string;
 
   @ApiProperty({

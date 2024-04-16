@@ -88,16 +88,48 @@ export class RestourantService {
 
   async updateRestourant(payload: UpdateRestourantRequest): Promise<void> {
     await this.#_checkRestourant(payload.id);
-    await this.checkTranslate(payload.name);
-
-    const deleteImageFile = await this.restourantModel.findById(payload.id);
-
-    await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
-
-    const file = await this.minioService.uploadFile({
-      file: payload.image,
-      bucket: 'food-menu',
-    });
+    if(payload.name){
+      await this.checkTranslate(payload.name);
+      await this.restourantModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          name: payload.name,
+        },
+        );
+      }
+    if(payload.description){
+        await this.checkTranslate(payload.description);
+        await this.restourantModel.findByIdAndUpdate(
+          { _id: payload.id },
+          {
+            description: payload.description
+          },
+        );
+    }
+    if(payload.location){
+      await this.restourantModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          location: payload.location
+        },
+      );
+    }
+    if(payload.image){
+        const deleteImageFile = await this.restourantModel.findById(payload.id);
+      
+        await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
+      
+        const file = await this.minioService.uploadFile({
+          file: payload.image,
+          bucket: 'food-menu',
+        });
+        await this.restourantModel.findByIdAndUpdate(
+          { _id: payload.id },
+          {
+            image_url: file.fileName,
+          },
+        );
+    }
 
     await this.translateModel.findByIdAndUpdate(
       {
@@ -105,16 +137,6 @@ export class RestourantService {
       },
       {
         status: 'active',
-      },
-    );
-
-    await this.restourantModel.findByIdAndUpdate(
-      { _id: payload.id },
-      {
-        name: payload.name,
-        description: payload.description,
-        location: payload.location,
-        image_url: file.fileName,
       },
     );
   }

@@ -159,68 +159,63 @@ export class CategoryService {
       })
       .exec();
 
-    let result = [];
+      let result = [];
 
-    for (let x of data) {
-      let foods = null;
-      let foodss = null;
-      let subcategories = [];
-      let food = [];
-      const category: any = {};
-
-      category.id = x._id;
-      category.name = (
-        await this.service.getSingleTranslate({
-          translateId: x.name.toString(),
-          languageCode: languageCode,
-        })
-      ).value;
-      category.image_url = x.image_url;
-
-      for (let item of x.subcategories) {
-        foodss = null;
-        foodss = item;
-        foodss.name = (
+      for (let x of data) {
+        let foods = null;
+        let foodss = null;
+        let subcategories = [];
+        let food = [];
+        const category: any = {};
+  
+        category.id = x._id;
+        category.name = (
           await this.service.getSingleTranslate({
-            translateId: foodss.name.toString(),
+            translateId: x.name.toString(),
             languageCode: languageCode,
           })
-        ).value;        
-        for(let isActiveFood of item.foods){
-          if(isActiveFood.status == "active"){
-            const foodds = item.foods
-            for (let fod of foodds) {
+        ).value;
+        category.image_url = x.image_url;
+  
+        for (let item of x.subcategories) {
+          foodss = null;
+          foodss = item;
+          foodss.name = (
+            await this.service.getSingleTranslate({
+              translateId: foodss.name.toString(),
+              languageCode: languageCode,
+            })
+          ).value;
+          for (let fod of item.foods) {
               foods = null;
               foods = fod;
-                foods.name = (
-                  await this.service.getSingleTranslate({
-                    translateId: foods.name.toString(),
-                    languageCode: languageCode,
-                  })
-                ).value;
-                foods.description = (
-                  await this.service.getSingleTranslate({
-                    translateId: foods.description.toString(),
-                    languageCode: languageCode,
-                  })
-                ).value;
+              foods.name = (
+                await this.service.getSingleTranslate({
+                  translateId: foods.name.toString(),
+                  languageCode: languageCode,
+                })
+              ).value;
+              foods.description = (
+                await this.service.getSingleTranslate({
+                  translateId: foods.description.toString(),
+                  languageCode: languageCode,
+                })
+              ).value;
+    
               food.push(foods);
             }
-          }else{
-            item.foods = []
-          }
+  
+          subcategories.push(foodss);
         }
-        subcategories.push(foodss);        
+        category.subcategories = subcategories;
+  
+        if (x.category_id) {
+          continue;
+        } else {
+          result.push(category);
+        }
       }
-      category.subcategories = subcategories;
-
-      if (x.category_id) {
-        continue;
-      } else {
-        result.push(category);
-      }
-    }
-    return result;
+      return result;
   }
 
   async getCategoryListByRestaurantIdForAdmins(

@@ -10,7 +10,7 @@ import { Definition, Translate, TranslateService } from '../translate';
 import { CreateFoodInterface, UpdateFoodRequest } from './interfaces';
 import { Category } from '../category/schemas';
 import { Restourant } from '../restourant/schemas';
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import { Language } from '../language';
 import { MinioService } from '../../client';
 import { SearchFoodInterface } from './interfaces/search-food.interface';
@@ -19,42 +19,55 @@ import { SearchFoodInterface } from './interfaces/search-food.interface';
 export class FoodService {
   constructor(
     @InjectModel(Food.name) private readonly foodModel: Model<Food>,
-    @InjectModel(Translate.name) private readonly translateModel: Model<Translate>,
+    @InjectModel(Translate.name)
+    private readonly translateModel: Model<Translate>,
     @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
-    @InjectModel(Restourant.name) private readonly restourantModel: Model<Restourant>,
+    @InjectModel(Restourant.name)
+    private readonly restourantModel: Model<Restourant>,
     @InjectModel(Language.name) private readonly languageModel: Model<Language>,
-    @InjectModel(Definition.name) private readonly definitionModel: Model<Definition>,
+    @InjectModel(Definition.name)
+    private readonly definitionModel: Model<Definition>,
     private minioService: MinioService,
-    private readonly service: TranslateService
+    private readonly service: TranslateService,
   ) {}
 
   async createFood(payload: CreateFoodInterface): Promise<void> {
-    
-    await this.#_checkCategory(payload.category_id)
-    await this.#_checkRestourant(payload.restourant_id)
-    
+    await this.#_checkCategory(payload.category_id);
+    await this.#_checkRestourant(payload.restourant_id);
+
     const name = JSON.parse(`${payload.name}`);
     const description = JSON.parse(`${payload.description}`);
-    const name_kays_array = Object.keys(name)
-    const description_kays_array = Object.keys(description)
+    const name_kays_array = Object.keys(name);
+    const description_kays_array = Object.keys(description);
 
-    for(let languageCode of name_kays_array){
-      await this.#_checkLanguage(languageCode)
-    }
-  
-    for(let languageCode of description_kays_array){
-      await this.#_checkLanguage(languageCode)
+    for (let languageCode of name_kays_array) {
+      await this.#_checkLanguage(languageCode);
     }
 
-    const translate_name = await this.service.createTranslate({code:uuidv4(), definition:name, type:"content"})
-    const translate_description = await this.service.createTranslate({code:uuidv4(), definition:description, type:"content"})
-        
-    const files = []
+    for (let languageCode of description_kays_array) {
+      await this.#_checkLanguage(languageCode);
+    }
 
-    for(let photo of payload.images){
-        const fileNames = await this.minioService.uploadFile({file:photo, bucket: "food-menu"})
-        files.push(fileNames.fileName)
-    }            
+    const translate_name = await this.service.createTranslate({
+      code: uuidv4(),
+      definition: name,
+      type: 'content',
+    });
+    const translate_description = await this.service.createTranslate({
+      code: uuidv4(),
+      definition: description,
+      type: 'content',
+    });
+
+    const files = [];
+
+    for (let photo of payload.images) {
+      const fileNames = await this.minioService.uploadFile({
+        file: photo,
+        bucket: 'food-menu',
+      });
+      files.push(fileNames.fileName);
+    }
 
     const newFood = await this.foodModel.create({
       name: translate_name,
@@ -62,11 +75,11 @@ export class FoodService {
       price: payload.price,
       category_id: payload.category_id,
       restourant_id: payload.restourant_id,
-      image_urls:files,
+      image_urls: files,
     });
-    await this.categoryModel.findByIdAndUpdate(payload.category_id,{
-      $push:{foods:newFood.id}
-    })
+    await this.categoryModel.findByIdAndUpdate(payload.category_id, {
+      $push: { foods: newFood.id },
+    });
 
     await this.translateModel.findByIdAndUpdate(
       {
@@ -75,7 +88,7 @@ export class FoodService {
       {
         status: 'active',
       },
-    )
+    );
 
     await this.translateModel.findByIdAndUpdate(
       {
@@ -84,127 +97,155 @@ export class FoodService {
       {
         status: 'active',
       },
-    )
+    );
     newFood.save();
   }
 
   async searchFood(payload: SearchFoodInterface): Promise<Food[]> {
-    const data =  await this.foodModel
-    .find({status:"active"})
-    .select('name description image_urls price food_status, restourant_id')
-    .exec();
-    
-    let result = []
-    for(let food of data){
-      const name_request = {
-        translateId:food.name.toString(),
-        languageCode:payload.languageCode
-      }
-      const translated_name = await this.service.getSingleTranslate(name_request)  
-      
-      if(payload.restourant_id==food.restourant_id.toString() && payload.name == translated_name.value.toString()){
-      
-        const desription_request = {
-          translateId:food.description.toString(),
-          languageCode:payload.languageCode
-      }
-      
-      const translated_description = await this.service.getSingleTranslate(desription_request) 
-      result.push({id:food._id, name:translated_name.value, description:translated_description.value, image_urls:food.image_urls , price: food.price, food_status:food.food_status})
-    }
-  }
-  return result
-}
+    const data = await this.foodModel
+      .find({ status: 'active' })
+      .select('name description image_urls price food_status, restourant_id')
+      .exec();
 
-  async getFoodList(languageCode:string): Promise<Food[]> {
-    const data =  await this.foodModel
+    let result = [];
+    for (let food of data) {
+      const name_request = {
+        translateId: food.name.toString(),
+        languageCode: payload.languageCode,
+      };
+      const translated_name = await this.service.getSingleTranslate(
+        name_request,
+      );
+
+      if (
+        payload.restourant_id == food.restourant_id.toString() &&
+        payload.name == translated_name.value.toString()
+      ) {
+        const desription_request = {
+          translateId: food.description.toString(),
+          languageCode: payload.languageCode,
+        };
+
+        const translated_description = await this.service.getSingleTranslate(
+          desription_request,
+        );
+        result.push({
+          id: food._id,
+          name: translated_name.value,
+          description: translated_description.value,
+          image_urls: food.image_urls,
+          price: food.price,
+          food_status: food.food_status,
+        });
+      }
+    }
+    return result;
+  }
+
+  async getFoodList(languageCode: string): Promise<Food[]> {
+    const data = await this.foodModel
       .find()
       .select('name description image_urls price, food_status')
       .exec();
-    
-    
-    let result = []
-    for(let x of data){
-        
-        const name_request = {
-          translateId:x.name.toString(),
-          languageCode:languageCode
-        }
-        
-        const desription_request = {
-          translateId:x.description.toString(),
-          languageCode:languageCode
-      }
-      
-      const translated_name = await this.service.getSingleTranslate(name_request)  
-      const translated_description = await this.service.getSingleTranslate(desription_request)          
-      result.push({id:x._id, name:translated_name.value, description:translated_description.value, image_urls:x.image_urls , price: x.price, food_status:x.food_status})
+
+    let result = [];
+    for (let x of data) {
+      const name_request = {
+        translateId: x.name.toString(),
+        languageCode: languageCode,
+      };
+
+      const desription_request = {
+        translateId: x.description.toString(),
+        languageCode: languageCode,
+      };
+
+
+      const translated_name = await this.service.getSingleTranslate(
+        name_request,
+      );
+      const translated_description = await this.service.getSingleTranslate(
+        desription_request,
+      );
+      result.push({
+        id: x._id,
+        name: translated_name.value,
+        description: translated_description.value,
+        image_urls: x.image_urls,
+        price: x.price,
+        food_status: x.food_status,
+      });
     }
-    return result
+    return result;
   }
-  
+
   async updateFood(payload: UpdateFoodRequest): Promise<void> {
     await this.#_checkFood(payload.id);
     const name = JSON.parse(`${payload.name}`);
     const description = JSON.parse(`${payload.description}`);
-    const name_kays_array = Object.keys(name)
-    const description_kays_array = Object.keys(description)    
-    
-    if(payload.images){
-      const deleteImageFile = await this.foodModel.findById(payload.id)
-      
-      for(let photo of deleteImageFile.image_urls){
-        await this.minioService.removeFile({fileName: photo})
-      }
-      
-      const files = []
+    const name_kays_array = Object.keys(name);
+    const description_kays_array = Object.keys(description);
 
-      for(let photo of payload.images){
-          const fileNames = await this.minioService.uploadFile({file:photo, bucket: "food-menu"})
-          files.push(fileNames.fileName)
-      }  
-      await this.foodModel.findByIdAndUpdate(
-        {_id:payload.id},
-        {
-          image_urls:files,
+    if (payload.images) {
+      const deleteImageFile = await this.foodModel.findById(payload.id);
+
+      for (let photo of deleteImageFile.image_urls) {
+        await this.minioService.removeFile({ fileName: photo });
+      }
+
+      const files = [];
+
+      for (let photo of payload.images) {
+        const fileNames = await this.minioService.uploadFile({
+          file: photo,
+          bucket: 'food-menu',
         });
+        files.push(fileNames.fileName);
       }
-      
-      if(payload.food_status){
-        await this.foodModel.findByIdAndUpdate(
-          {_id:payload.id},
-          {
-            food_status:payload.food_status,
-          });
+      await this.foodModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          image_urls: files,
+        },
+      );
+    }
+
+    if (payload.food_status) {
+      await this.foodModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          food_status: payload.food_status,
+        },
+      );
+    }
+
+    if (payload.status) {
+      await this.foodModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          status: payload.status,
+        },
+      );
+    }
+
+    if (payload.name) {
+      for (let languageCode of name_kays_array) {
+        await this.#_checkLanguage(languageCode);
       }
+      const translatefindByID = await this.foodModel.findById(payload.id);
 
-      if(payload.status){
-        await this.foodModel.findByIdAndUpdate(
-          {_id:payload.id},
-          {
-            status:payload.status,
-          });
-      }
+      const translate = await this.translateModel.findById(
+        translatefindByID.name,
+      );
 
-      if(payload.name){
-        for(let languageCode of name_kays_array){
-          await this.#_checkLanguage(languageCode)
-        }
-      const translatefindByID = await this.foodModel.findById(payload.id)
-
-      const translate = await this.translateModel.findById(translatefindByID.name)
-            
-      
-      await this.definitionModel.deleteMany({translateId:translate.id})
-      
+      await this.definitionModel.deleteMany({ translateId: translate.id });
 
       await this.translateModel.findByIdAndUpdate(payload.id, {
         definitions: [],
-      });      
+      });
 
       for (const item of name_kays_array) {
         const language = await this.languageModel.findOne({ code: item });
-                               
 
         const newDefinition = await this.definitionModel.create({
           languageId: language.id,
@@ -214,79 +255,77 @@ export class FoodService {
 
         await this.translateModel.findByIdAndUpdate(translate.id, {
           $push: { definitions: newDefinition.id },
-        });        
+        });
         newDefinition.save();
       }
     }
 
-
-    if(payload.description){
-      for(let languageCode of description_kays_array){
-        await this.#_checkLanguage(languageCode)
+    if (payload.description) {
+      for (let languageCode of description_kays_array) {
+        await this.#_checkLanguage(languageCode);
       }
-    const translatefindByID = await this.foodModel.findById(payload.id)
+      const translatefindByID = await this.foodModel.findById(payload.id);
 
-    const translate = await this.translateModel.findById(translatefindByID.description)
-          
-    
-    await this.definitionModel.deleteMany({translateId:translate.id})
-    
+      const translate = await this.translateModel.findById(
+        translatefindByID.description,
+      );
 
-    await this.translateModel.findByIdAndUpdate(payload.id, {
-      definitions: [],
-    });      
+      await this.definitionModel.deleteMany({ translateId: translate.id });
 
-    for (const item of description_kays_array) {
-      const language = await this.languageModel.findOne({ code: item });
-                             
-
-      const newDefinition = await this.definitionModel.create({
-        languageId: language.id,
-        translateId: translate.id,
-        value: description[item],
+      await this.translateModel.findByIdAndUpdate(payload.id, {
+        definitions: [],
       });
 
-      await this.translateModel.findByIdAndUpdate(translate.id, {
-        $push: { definitions: newDefinition.id },
-      });        
-      newDefinition.save();
+      for (const item of description_kays_array) {
+        const language = await this.languageModel.findOne({ code: item });
+
+        const newDefinition = await this.definitionModel.create({
+          languageId: language.id,
+          translateId: translate.id,
+          value: description[item],
+        });
+
+        await this.translateModel.findByIdAndUpdate(translate.id, {
+          $push: { definitions: newDefinition.id },
+        });
+        newDefinition.save();
+      }
+    }
+
+    if (payload.price) {
+      await this.foodModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          price: payload.price,
+        },
+      );
     }
   }
-
-  if(payload.price){
-    await this.foodModel.findByIdAndUpdate(
-      {_id:payload.id},
-      {
-        price:payload.price
-      });
-  }
-    
-}
 
   async deleteFood(id: string): Promise<void> {
     await this.#_checkFood(id);
-    const deleteImageFile = await this.foodModel.findById(id)
-    for(let photo of deleteImageFile.image_urls){
-      await this.minioService.removeFile({fileName: photo})
+    const deleteImageFile = await this.foodModel.findById(id);
+    for (let photo of deleteImageFile.image_urls) {
+      await this.minioService.removeFile({ fileName: photo });
     }
-    
-        await this.translateModel.findByIdAndUpdate(
-          {
-            _id: deleteImageFile.name,
-          },
-          {
-            status: 'inactive',
-          },
-        );
-    
-        await this.translateModel.findByIdAndUpdate(
-          {
-            _id: deleteImageFile.description,
-          },
-          {
-            status: 'inactive',
-          },
-        );
+
+    await this.translateModel.findByIdAndUpdate(
+      {
+        _id: deleteImageFile.name,
+      },
+      {
+        status: 'inactive',
+      },
+    );
+
+    await this.translateModel.findByIdAndUpdate(
+      {
+        _id: deleteImageFile.description,
+      },
+      {
+        status: 'inactive',
+      },
+    );
     await this.categoryModel.findByIdAndDelete({ _id: id });
 
     await this.foodModel.findByIdAndDelete({ _id: id });

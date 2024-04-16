@@ -7,6 +7,7 @@ export class UpdateCategoryDto {
     required: false,
   })
   @IsString()
+  @IsOptional()
   name?: string;
 
   @ApiProperty({

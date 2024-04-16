@@ -8,6 +8,8 @@ import { TranslateModule } from './modules/translate';
 import { ConfigModule } from '@nestjs/config';
 import { MinioModule } from '@client';
 import { minioConfig } from '@config';
+import { UserModule } from './modules/user/user.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { minioConfig } from '@config';
     CategoryModule,
     FoodModule,
     MinioModule,
+    UserModule,
+    AuthModule
   ],
 })
 export class AppModule {}

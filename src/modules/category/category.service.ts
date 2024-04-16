@@ -301,32 +301,34 @@ export class CategoryService {
   }
 
   async updateCategory(payload: UpdateCategoryInterface): Promise<void> {
-    await this.#_checkCategory(payload.id);
-    await this.checkTranslate(payload.name);
-
-    const deleteImageFile = await this.categoryModel.findById(payload.id);
-
-    await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
-
-    const file = await this.minioService.uploadFile({
-      file: payload.image,
-      bucket: 'food-menu',
-    });
-
+    await this.#_checkCategory(payload.id);    
+    if(payload.name){
+      await this.checkTranslate(payload.name);
+      await this.categoryModel.findByIdAndUpdate(payload.id, {
+        name:payload.name
+      })
+    }
+    if(payload.image){
+      const deleteImageFile = await this.categoryModel.findById(payload.id);
+      await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
+      const file = await this.minioService.uploadFile({
+        file: payload.image,
+        bucket: 'food-menu',
+      });
+      await this.categoryModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          name: payload.name,
+          image_url: file.fileName,
+        },
+      );
+    }
     await this.translateModel.findByIdAndUpdate(
       {
         _id: payload.name,
       },
       {
         status: 'active',
-      },
-    );
-
-    await this.categoryModel.findByIdAndUpdate(
-      { _id: payload.id },
-      {
-        name: payload.name,
-        image_url: file.fileName,
       },
     );
   }

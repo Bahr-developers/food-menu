@@ -117,7 +117,7 @@ export class RestourantService {
     if(payload.image){
         const deleteImageFile = await this.restourantModel.findById(payload.id);
       
-        await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
+        await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
       
         const file = await this.minioService.uploadFile({
           file: payload.image,
@@ -145,7 +145,7 @@ export class RestourantService {
     await this.#_checkRestourant(id);
     const deleteImageFile = await this.restourantModel.findById(id);
 
-    await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
+    await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
 
     await this.translateModel.findByIdAndUpdate(
       {

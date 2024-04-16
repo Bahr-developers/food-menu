@@ -302,10 +302,18 @@ export class CategoryService {
       await this.categoryModel.findByIdAndUpdate(payload.id, {
         name:payload.name
       })
+      await this.translateModel.findByIdAndUpdate(
+        {
+          _id: payload.name,
+        },
+        {
+          status: 'active',
+        },
+      );
     }
     if(payload.image){
       const deleteImageFile = await this.categoryModel.findById(payload.id);
-      await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
+      await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
       const file = await this.minioService.uploadFile({
         file: payload.image,
         bucket: 'food-menu',
@@ -318,21 +326,13 @@ export class CategoryService {
         },
       );
     }
-    await this.translateModel.findByIdAndUpdate(
-      {
-        _id: payload.name,
-      },
-      {
-        status: 'active',
-      },
-    );
   }
 
   async deleteCategory(id: string): Promise<void> {
     await this.#_checkCategory(id);
     const deleteImageFile = await this.categoryModel.findById(id);
     if(deleteImageFile.image_url){
-          await this.minioService.removeFile({ fileName: deleteImageFile.image_url });
+          await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
         }
         await this.translateModel.findByIdAndUpdate(
           {

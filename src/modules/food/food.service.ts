@@ -36,8 +36,8 @@ export class FoodService {
     await this.#_checkRestourant(payload.restourant_id);
 
     const name = JSON.parse(`${payload.name}`);
-    const description = JSON.parse(`${payload.description}`);
     const name_kays_array = Object.keys(name);
+    const description = JSON.parse(`${payload.description}`);
     const description_kays_array = Object.keys(description);
 
     for (let languageCode of name_kays_array) {
@@ -181,16 +181,13 @@ export class FoodService {
 
   async updateFood(payload: UpdateFoodRequest): Promise<void> {
     await this.#_checkFood(payload.id);
-    const name = JSON.parse(`${payload.name}`);
-    const description = JSON.parse(`${payload.description}`);
-    const name_kays_array = Object.keys(name);
-    const description_kays_array = Object.keys(description);
+
 
     if (payload.images) {
       const deleteImageFile = await this.foodModel.findById(payload.id);
 
       for (let photo of deleteImageFile.image_urls) {
-        await this.minioService.removeFile({ fileName: photo });
+        await this.minioService.removeFile({ fileName: photo }).catch(undefined => undefined);
       }
 
       const files = [];
@@ -229,6 +226,8 @@ export class FoodService {
     }
 
     if (payload.name) {
+      const name = JSON.parse(`${payload.name}`);
+      const name_kays_array = Object.keys(name);
       for (let languageCode of name_kays_array) {
         await this.#_checkLanguage(languageCode);
       }
@@ -261,6 +260,8 @@ export class FoodService {
     }
 
     if (payload.description) {
+      const description = JSON.parse(`${payload.description}`);
+      const description_kays_array = Object.keys(description);
       for (let languageCode of description_kays_array) {
         await this.#_checkLanguage(languageCode);
       }
@@ -306,7 +307,7 @@ export class FoodService {
     await this.#_checkFood(id);
     const deleteImageFile = await this.foodModel.findById(id);
     for (let photo of deleteImageFile.image_urls) {
-      await this.minioService.removeFile({ fileName: photo });
+      await this.minioService.removeFile({ fileName: photo }).catch(undefined => undefined);
     }
 
     await this.translateModel.findByIdAndUpdate(

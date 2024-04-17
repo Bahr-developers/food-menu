@@ -96,6 +96,14 @@ export class RestourantService {
           name: payload.name,
         },
         );
+        await this.translateModel.findByIdAndUpdate(
+          {
+            _id: payload.name,
+          },
+          {
+            status: 'active',
+          },
+        );
       }
     if(payload.description){
         await this.checkTranslate(payload.description);
@@ -105,12 +113,28 @@ export class RestourantService {
             description: payload.description
           },
         );
+        await this.translateModel.findByIdAndUpdate(
+          {
+            _id: payload.description,
+          },
+          {
+            status: 'active',
+          },
+        );
     }
     if(payload.location){
       await this.restourantModel.findByIdAndUpdate(
         { _id: payload.id },
         {
           location: payload.location
+        },
+      );
+      await this.translateModel.findByIdAndUpdate(
+        {
+          _id: payload.location,
+        },
+        {
+          status: 'active',
         },
       );
     }
@@ -130,15 +154,6 @@ export class RestourantService {
           },
         );
     }
-
-    await this.translateModel.findByIdAndUpdate(
-      {
-        _id: payload.name,
-      },
-      {
-        status: 'active',
-      },
-    );
   }
 
   async deleteRestourant(id: string): Promise<void> {

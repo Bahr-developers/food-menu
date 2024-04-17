@@ -149,7 +149,7 @@ export class CategoryService {
     await this.#_checkId(restaurantId);
 
     const data = await this.categoryModel
-      .find({ restaurant_id: restaurantId })
+      .find({ restaurant_id: restaurantId})
       .select('name image_url category_id')
       .populate({
         path: 'subcategories',
@@ -163,6 +163,7 @@ export class CategoryService {
 
       for (let x of data) {
         let foods = null;
+        let defaultArray = []
         let foodss = null;
         let subcategories = [];
         let food = [];
@@ -187,7 +188,7 @@ export class CategoryService {
             })
           ).value;
           for (let fod of item.foods) {
-              foods = null;
+              foods = null;              
               foods = fod;
               foods.name = (
                 await this.service.getSingleTranslate({
@@ -200,11 +201,9 @@ export class CategoryService {
                   translateId: foods.description.toString(),
                   languageCode: languageCode,
                 })
-              ).value;
-    
-              food.push(foods);
-            }
-  
+              ).value;        
+            food.push(foods);
+          }
           subcategories.push(foodss);
         }
         category.subcategories = subcategories;
@@ -222,7 +221,6 @@ export class CategoryService {
     languageCode: string,
     restaurantId: string,
   ): Promise<Category[]> {
-    // checking restaurant ID
     await this.#_checkId(restaurantId);
 
     const data = await this.categoryModel

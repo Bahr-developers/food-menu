@@ -35,6 +35,8 @@ export class FoodService {
     await this.#_checkCategory(payload.category_id);
     await this.#_checkRestourant(payload.restourant_id);
 
+    
+    
     const name = JSON.parse(`${payload.name}`);
     const name_kays_array = Object.keys(name);
     const description = JSON.parse(`${payload.description}`);
@@ -181,9 +183,9 @@ export class FoodService {
 
   async updateFood(payload: UpdateFoodRequest): Promise<void> {
     await this.#_checkFood(payload.id);
+    
 
-
-    if (payload.images) {
+    if (payload.images[0]) {
       const deleteImageFile = await this.foodModel.findById(payload.id);
 
       for (let photo of deleteImageFile.image_urls) {

@@ -297,6 +297,11 @@ export class CategoryService {
 
   async updateCategory(payload: UpdateCategoryInterface): Promise<void> {
     await this.#_checkCategory(payload.id);    
+    if(payload.category_id){
+      await this.categoryModel.findByIdAndUpdate(payload.id, {
+        category_id:payload.category_id
+      })
+    }
     if(payload.name){
       await this.checkTranslate(payload.name);
       await this.categoryModel.findByIdAndUpdate(payload.id, {
@@ -321,7 +326,6 @@ export class CategoryService {
       await this.categoryModel.findByIdAndUpdate(
         { _id: payload.id },
         {
-          name: payload.name,
           image_url: file.fileName,
         },
       );

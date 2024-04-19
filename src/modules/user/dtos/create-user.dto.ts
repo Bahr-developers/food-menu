@@ -17,6 +17,13 @@ export class CreateUserDto implements CreateUserInterface {
   phone: string;
 
   @ApiProperty({
+    example:"qwerty",
+    required:true
+  })
+  @IsString()
+  password:string
+
+  @ApiProperty({
     example: '660d5290e49538271705501e',
     required: true,
   })

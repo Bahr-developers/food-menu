@@ -10,7 +10,8 @@ import {
   import { InjectModel } from '@nestjs/mongoose';
   import { User } from './schemas';
   import { Model, isValidObjectId } from 'mongoose';
-import { Restourant } from '../restourant/schemas';
+  import { Restourant } from '../restourant/schemas';
+  import * as bcrypt from 'bcrypt'
   @Injectable()
   export class UserService {
     constructor(
@@ -22,10 +23,12 @@ import { Restourant } from '../restourant/schemas';
   
     async createUser(payload: CreateUserInterface): Promise<void> {
       await this.#_checkRestourant(payload.restourant_id);
+      const hashed_password = await bcrypt.hash(payload.password, 7)
   
       const newUser = await this.userModel.create({
         full_name: payload.full_name,
         phone: payload.phone,
+        password:hashed_password,
         restourant_id:payload.restourant_id
       });
       newUser.save();
@@ -34,7 +37,7 @@ import { Restourant } from '../restourant/schemas';
     async getUserList(): Promise<User[]> {
       const data = await this.userModel
         .find()
-        .select('full_name phone restourant_id')
+        .select('full_name phone restourant_id password')
         .exec();
       return data;
     }
@@ -56,6 +59,15 @@ import { Restourant } from '../restourant/schemas';
               phone: payload.phone
             },
           );
+      }
+      if(payload.password){
+      const hashed_password = await bcrypt.hash(payload.password, 7)
+        await this.userModel.findByIdAndUpdate(
+          {_id:payload.id},
+          {
+            password:hashed_password
+          }
+        )
       }
     }
   

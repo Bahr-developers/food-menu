@@ -7,7 +7,7 @@ export class AddOneFoodImageDto implements AddOneFoodImageInterface {
 
   @ApiProperty({
     type: 'string',
-    format: 'buffer',
+    format: 'binary',
   })
   image: any;
 }

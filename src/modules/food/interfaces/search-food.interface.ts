@@ -1,6 +1,5 @@
 export declare interface SearchFoodInterface {
-    name: string;
-    restourant_id: string;
-    languageCode:string
-  }
-  
+  name: string;
+  restaurant_id: string;
+  languageCode: string;
+}

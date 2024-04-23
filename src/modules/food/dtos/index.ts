@@ -1,2 +1,5 @@
 export * from './create-food.dto'
 export * from './update-food.dto'
+export * from './add-one-food-image.dto'
+export * from './delete-food-image.dto'
+export * from './search-food.dto'

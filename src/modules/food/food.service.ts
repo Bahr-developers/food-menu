@@ -7,13 +7,18 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Food } from './schemas';
 import { Model, isValidObjectId } from 'mongoose';
 import { Definition, Translate, TranslateService } from '../translate';
-import { CreateFoodInterface, UpdateFoodRequest } from './interfaces';
+import {
+  AddOneFoodImageInterface,
+  CreateFoodInterface,
+  UpdateFoodRequest,
+} from './interfaces';
 import { Category } from '../category/schemas';
 import { Restourant } from '../restourant/schemas';
 import { v4 as uuidv4 } from 'uuid';
 import { Language } from '../language';
 import { MinioService } from '../../client';
 import { SearchFoodInterface } from './interfaces/search-food.interface';
+import { DeleteFoodImageDto } from './dtos';
 
 @Injectable()
 export class FoodService {
@@ -35,8 +40,6 @@ export class FoodService {
     await this.#_checkCategory(payload.category_id);
     await this.#_checkRestourant(payload.restourant_id);
 
-    
-    
     const name = JSON.parse(`${payload.name}`);
     const name_kays_array = Object.keys(name);
     const description = JSON.parse(`${payload.description}`);
@@ -104,16 +107,32 @@ export class FoodService {
   }
 
   async searchFood(payload: SearchFoodInterface): Promise<Food[]> {
-    const data = await this.getFoodList(payload.languageCode)
+    await this.#_checkRestourant(payload.restaurant_id);
 
-    if(!payload.name.length){
-      return data
+    
+    const data = await this.getFoodList(payload.languageCode);
+
+    if (!payload.name.length) {
+      return data;
     }
 
+    const restaurantFoods = data.filter(
+      (f) => f.restourant_id.toString() === payload.restaurant_id,
+    );
+
     let result = [];
-    for(const food of data){
-      if(food.name.toString().toLocaleLowerCase().includes(payload.name.toLocaleLowerCase()) || food.description.toString().toLocaleLowerCase().includes(payload.name.toLocaleLowerCase())){
-        result.push(food)
+    for (const food of restaurantFoods) {
+      if (
+        food.name
+          .toString()
+          .toLocaleLowerCase()
+          .includes(payload.name.toLocaleLowerCase()) ||
+        food.description
+          .toString()
+          .toLocaleLowerCase()
+          .includes(payload.name.toLocaleLowerCase())
+      ) {
+        result.push(food);
       }
     }
     return result;
@@ -137,7 +156,6 @@ export class FoodService {
         languageCode: languageCode,
       };
 
-
       const translated_name = await this.service.getSingleTranslate(
         name_request,
       );
@@ -158,13 +176,14 @@ export class FoodService {
 
   async updateFood(payload: UpdateFoodRequest): Promise<void> {
     await this.#_checkFood(payload.id);
-    
 
     if (payload.images[0]) {
       const deleteImageFile = await this.foodModel.findById(payload.id);
 
       for (let photo of deleteImageFile.image_urls) {
-        await this.minioService.removeFile({ fileName: photo }).catch(undefined => undefined);
+        await this.minioService
+          .removeFile({ fileName: photo })
+          .catch((undefined) => undefined);
       }
 
       const files = [];
@@ -280,11 +299,44 @@ export class FoodService {
     }
   }
 
+  async addOneFoodImage(payload: AddOneFoodImageInterface): Promise<void> {
+    await this.#_checkFood(payload.foodId);
+
+    const imageUrl = await this.minioService.uploadFile({
+      file: payload.image,
+      bucket: 'food-menu',
+    });
+
+    await this.foodModel.findByIdAndUpdate(payload.foodId, {
+      $push: { image_urls: imageUrl.fileName },
+    });
+  }
+
+  async deleteOneFoodImage(payload: DeleteFoodImageDto): Promise<void> {
+    await this.#_checkFood(payload.foodId);
+
+    const foundedFood = await this.foodModel.findById(payload.foodId);
+
+    if (!foundedFood.image_urls.includes(payload.image_url)) {
+      return;
+    }
+
+    await this.foodModel.findByIdAndUpdate(foundedFood.id, {
+      $pop: { image_urls: payload.image_url },
+    });
+
+    await this.minioService
+      .removeFile({ fileName: payload.image_url })
+      .catch((undefined) => undefined);
+  }
+
   async deleteFood(id: string): Promise<void> {
     await this.#_checkFood(id);
     const deleteImageFile = await this.foodModel.findById(id);
     for (let photo of deleteImageFile.image_urls) {
-      await this.minioService.removeFile({ fileName: photo }).catch(undefined => undefined);
+      await this.minioService
+        .removeFile({ fileName: photo })
+        .catch((undefined) => undefined);
     }
 
     await this.translateModel.findByIdAndUpdate(

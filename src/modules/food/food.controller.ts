@@ -20,7 +20,6 @@ import {
   AddOneFoodImageDto,
   CreateFoodDto,
   DeleteFoodImageDto,
-  SearchFoodDto,
   UpdateFoodDto,
 } from './dtos';
 
@@ -43,16 +42,16 @@ export class FoodController {
     return await this.#_foodService.getFoodList(languageCode);
   }
 
-  @Get('search')
+  @Get(':restaurantId/search')
   async searchFood(
     @Headers('accept-language') languageCode: string,
     @Query('name') name: string,
-    @Body() payload: SearchFoodDto,
+    @Param('restaurantId') restaurantId: string,
   ): Promise<Food[]> {
     return await this.#_foodService.searchFood({
       name,
       languageCode,
-      ...payload,
+      restaurant_id: restaurantId,
     });
   }
 

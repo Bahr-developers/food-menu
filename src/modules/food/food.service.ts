@@ -109,19 +109,14 @@ export class FoodService {
   async searchFood(payload: SearchFoodInterface): Promise<Food[]> {
     await this.#_checkRestourant(payload.restaurant_id);
 
-
     const data = await this.getFoodList(payload.languageCode);
 
-    if (!payload.name.length) {
+    if (!payload.name.length || !data.length) {
       return data;
     }
 
-    const restaurantFoods = data.filter(
-      (f) => f.restourant_id.toString() === payload.restaurant_id,
-    );
-
     let result = [];
-    for (const food of restaurantFoods) {
+    for (const food of data) {
       if (
         food.name
           .toString()
@@ -141,7 +136,7 @@ export class FoodService {
   async getFoodList(languageCode: string): Promise<Food[]> {
     const data = await this.foodModel
       .find()
-      .select('name description image_urls price, food_status')
+      .select('name description image_urls price food_status')
       .exec();
 
     let result = [];

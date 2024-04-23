@@ -39,7 +39,7 @@ export class Food {
     status: string;
 
     @Prop({type:Types.UUID, ref: "Restourant", required: true })
-    restourant_id: Restourant[]
+    restourant_id: Restourant
 }
 
 export const FoodSchema = SchemaFactory.createForClass(Food);

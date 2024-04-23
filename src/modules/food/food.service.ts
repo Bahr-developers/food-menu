@@ -109,7 +109,7 @@ export class FoodService {
   async searchFood(payload: SearchFoodInterface): Promise<Food[]> {
     await this.#_checkRestourant(payload.restaurant_id);
 
-    
+
     const data = await this.getFoodList(payload.languageCode);
 
     if (!payload.name.length) {
@@ -322,7 +322,7 @@ export class FoodService {
     }
 
     await this.foodModel.findByIdAndUpdate(foundedFood.id, {
-      $pop: { image_urls: payload.image_url },
+      $pull: { image_urls: payload.image_url },
     });
 
     await this.minioService

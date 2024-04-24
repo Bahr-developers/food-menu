@@ -110,23 +110,24 @@ export class FoodService {
     await this.#_checkRestourant(payload.restaurant_id);
 
     const data = await this.getFoodList(payload.languageCode);
-
+    
     if (!payload.name.length || !data.length) {
       return data;
     }
 
     let result = [];
-    for (const food of data) {
+    for (const food of data) {      
       if (
         food.name
           .toString()
           .toLocaleLowerCase()
-          .includes(payload.name.toLocaleLowerCase()) ||
+          .includes(payload.name.toLocaleLowerCase()) && food.restourant_id.toString() == payload.restaurant_id ||
         food.description
           .toString()
           .toLocaleLowerCase()
-          .includes(payload.name.toLocaleLowerCase())
+          .includes(payload.name.toLocaleLowerCase()) && food.restourant_id.toString() == payload.restaurant_id
       ) {
+        
         result.push(food);
       }
     }
@@ -136,7 +137,7 @@ export class FoodService {
   async getFoodList(languageCode: string): Promise<Food[]> {
     const data = await this.foodModel
       .find()
-      .select('name description image_urls price food_status')
+      .select('name description image_urls price food_status, restourant_id')
       .exec();
 
     let result = [];
@@ -163,6 +164,7 @@ export class FoodService {
         description: translated_description.value,
         image_urls: x.image_urls,
         price: x.price,
+        restourant_id: x.restourant_id,
         food_status: x.food_status,
       });
     }

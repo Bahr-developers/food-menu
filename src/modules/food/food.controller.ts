@@ -75,15 +75,12 @@ export class FoodController {
     await this.#_foodService.addOneFoodImage({ image, ...payload });
   }
 
-  @ApiConsumes('multipart/form-data')
   @Patch('edit/:id')
-  @UseInterceptors(FilesInterceptor('images'))
   async updateFood(
     @Param('id') projectId: string,
     @Body() payload: UpdateFoodDto,
-    @UploadedFiles() images: any,
   ): Promise<void> {
-    await this.#_foodService.updateFood({ ...payload, id: projectId, images });
+    await this.#_foodService.updateFood({ ...payload, id: projectId });
   }
 
   @Delete('delete/food-image')

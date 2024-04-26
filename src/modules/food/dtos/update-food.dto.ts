@@ -1,4 +1,4 @@
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UpdateFoodRequest } from '../interfaces';
 
@@ -36,19 +36,6 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
   @IsString()
   @IsOptional()
   price?: string;
-
-  @ApiProperty({
-    maxItems: 8,
-    type: 'array',
-    items: {
-      format: 'binary',
-      type: 'string',
-    },
-    required: false,
-  })
-  @IsOptional()
-  @IsArray()
-  images?: any;
 
   @ApiProperty({
     examples: ['available', 'none', 'preparing'],

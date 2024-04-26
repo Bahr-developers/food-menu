@@ -174,32 +174,6 @@ export class FoodService {
   async updateFood(payload: UpdateFoodRequest): Promise<void> {
     await this.#_checkFood(payload.id);
 
-    if (payload.images[0]) {
-      const deleteImageFile = await this.foodModel.findById(payload.id);
-
-      for (let photo of deleteImageFile.image_urls) {
-        await this.minioService
-          .removeFile({ fileName: photo })
-          .catch((undefined) => undefined);
-      }
-
-      const files = [];
-
-      for (let photo of payload.images) {
-        const fileNames = await this.minioService.uploadFile({
-          file: photo,
-          bucket: 'food-menu',
-        });
-        files.push(fileNames.fileName);
-      }
-      await this.foodModel.findByIdAndUpdate(
-        { _id: payload.id },
-        {
-          image_urls: files,
-        },
-      );
-    }
-
     if (payload.food_status) {
       await this.foodModel.findByIdAndUpdate(
         { _id: payload.id },

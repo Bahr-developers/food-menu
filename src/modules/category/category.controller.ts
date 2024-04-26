@@ -35,6 +35,15 @@ export class CategoryController {
     return await this.#_categoryService.getCategoryList(languageCode);
   }
 
+  @Get('find/:categoryId')
+  async getCategoryById(
+    @Headers('accept-language') languageCode: string,
+    @Param('categoryId') categoryId:string,
+    @Body('restaurant_id') restaurant_id:string
+  ): Promise<Category[]> {
+    return await this.#_categoryService.getCategoryById({languageCode, categoryId, restaurant_id});
+  }
+
   @Get('find/by/restaurant/:restaurantId')
   async getCategoryListByRestaurantId(
     @Headers('accept-language') languageCode: string,

@@ -15,6 +15,7 @@ export class CreateFoodDto implements CreateFoodInterface {
   })
   description: object;
 
+
   @ApiProperty({
     example: '12000',
     required: true,

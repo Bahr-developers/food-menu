@@ -10,6 +10,7 @@ import { Model, isValidObjectId } from 'mongoose';
 import { Translate, TranslateService } from '../translate';
 import { MinioService } from '../../client';
 import { Restourant } from 'modules/restourant/schemas';
+import { GetSingleCategory } from './interfaces/get-single-category.interface';
 @Injectable()
 export class CategoryService {
   constructor(
@@ -70,6 +71,76 @@ export class CategoryService {
     );
   }
 
+  async getCategoryById(payload:GetSingleCategory): Promise<Category[]> {
+    const data = await this.categoryModel
+      .find({_id:payload.categoryId, restaurant_id:payload.restaurant_id})
+      .select('name image_url category_id, food_status')
+      .populate({
+        path: 'subcategories',
+        populate: {
+          path: 'foods',
+        },
+      })
+      .exec();
+
+    let result = [];
+
+    for (let x of data) {
+      let foods = null;
+      let foodss = null;
+      let subcategories = [];
+      let food = [];
+      const category: any = {};
+
+      category.id = x._id;
+      const category_name = await this.service.getSingleTranslate({
+        translateId: x.name.toString(),
+        languageCode: payload.languageCode,
+      })
+
+      category.name = category_name.value;      
+      category.image_url = x.image_url;
+
+      for (let item of x.subcategories) {
+        foodss = null;
+        foodss = item;
+        foodss.name = (
+          await this.service.getSingleTranslate({
+            translateId: foodss.name.toString(),
+            languageCode: payload.languageCode,
+          })
+        ).value;
+        for (let fod of item.foods) {
+          foods = null;
+          foods = fod;
+          foods.name = (
+            await this.service.getSingleTranslate({
+              translateId: foods.name.toString(),
+              languageCode: payload.languageCode,
+            })
+          ).value;
+          foods.description = (
+            await this.service.getSingleTranslate({
+              translateId: foods.description.toString(),
+              languageCode: payload.languageCode,
+            })
+          ).value;
+
+          food.push(foods);
+        }
+        
+        subcategories.push(foodss);
+      }
+      category.subcategories = subcategories;
+
+      if (x.category_id) {
+        continue;
+      } else {
+        result.push(category);
+      }
+    }
+    return result;
+  }
   async getCategoryList(languageCode: string): Promise<Category[]> {
     const data = await this.categoryModel
       .find()

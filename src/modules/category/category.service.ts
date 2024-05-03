@@ -365,7 +365,8 @@ export class CategoryService {
   }
 
   async updateCategory(payload: UpdateCategoryInterface): Promise<void> {
-    await this.#_checkCategory(payload.id);    
+    await this.#_checkCategory(payload.id); 
+    const category = await this.categoryModel.findById(payload.id)   
     if(payload.category_id){
       await this.categoryModel.findByIdAndUpdate(payload.id, {
         category_id:payload.category_id
@@ -373,6 +374,7 @@ export class CategoryService {
     }
     if(payload.name){
       await this.checkTranslate(payload.name);
+      await this.translateModel.findByIdAndDelete(category.name)
       await this.categoryModel.findByIdAndUpdate(payload.id, {
         name:payload.name
       })
@@ -407,12 +409,9 @@ export class CategoryService {
     if(deleteImageFile.image_url){
           await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
         }
-        await this.translateModel.findByIdAndUpdate(
+        await this.translateModel.findByIdAndDelete(
           {
             _id: deleteImageFile.name,
-          },
-          {
-            status: 'inactive',
           },
         );
         await this.categoryModel.findByIdAndDelete({ _id: id });

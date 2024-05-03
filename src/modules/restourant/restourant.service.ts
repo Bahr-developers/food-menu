@@ -48,6 +48,22 @@ export class RestourantService {
         status: 'active',
       },
     );
+    await this.translateModel.findByIdAndUpdate(
+      {
+        _id: payload.description,
+      },
+      {
+        status: 'active',
+      },
+    );
+    await this.translateModel.findByIdAndUpdate(
+      {
+        _id: payload.location,
+      },
+      {
+        status: 'active',
+      },
+    );
     newRestourant.save();
   }
 
@@ -83,13 +99,16 @@ export class RestourantService {
         location: x.location,
       });
     }
+    
     return result;
   }
 
   async updateRestourant(payload: UpdateRestourantRequest): Promise<void> {
     await this.#_checkRestourant(payload.id);
+    const restourant = await this.restourantModel.findById(payload.id)
     if(payload.name){
       await this.checkTranslate(payload.name);
+      await this.translateModel.findByIdAndDelete(restourant.name)
       await this.restourantModel.findByIdAndUpdate(
         { _id: payload.id },
         {
@@ -103,10 +122,11 @@ export class RestourantService {
           {
             status: 'active',
           },
-        );
-      }
-    if(payload.description){
-        await this.checkTranslate(payload.description);
+          );
+        }
+        if(payload.description){
+          await this.checkTranslate(payload.description);
+          await this.translateModel.findByIdAndDelete(restourant.description)
         await this.restourantModel.findByIdAndUpdate(
           { _id: payload.id },
           {
@@ -123,6 +143,7 @@ export class RestourantService {
         );
     }
     if(payload.location){
+      await this.translateModel.findByIdAndDelete(restourant.location)
       await this.restourantModel.findByIdAndUpdate(
         { _id: payload.id },
         {
@@ -158,18 +179,20 @@ export class RestourantService {
 
   async deleteRestourant(id: string): Promise<void> {
     await this.#_checkRestourant(id);
+    const restourant = await this.restourantModel.findById(id)
     const deleteImageFile = await this.restourantModel.findById(id);
 
     await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
 
-    await this.translateModel.findByIdAndUpdate(
+    await this.translateModel.findByIdAndDelete(
       {
         _id: deleteImageFile.name,
       },
-      {
-        status: 'inactive',
-      },
     );
+    await this.translateModel.findByIdAndDelete(restourant.name)
+    await this.translateModel.findByIdAndDelete(restourant.description)
+    await this.translateModel.findByIdAndDelete(restourant.location)
+
     await this.restourantModel.findByIdAndDelete({ _id: id });
   }
 

@@ -202,7 +202,7 @@ export class FoodService {
 
       const translate = await this.translateModel.findById(
         translatefindByID.name,
-      );
+      );        
 
       await this.definitionModel.deleteMany({ translateId: translate.id });
 
@@ -310,21 +310,15 @@ export class FoodService {
         .catch((undefined) => undefined);
     }
 
-    await this.translateModel.findByIdAndUpdate(
+    await this.translateModel.findByIdAndDelete(
       {
         _id: deleteImageFile.name,
       },
-      {
-        status: 'inactive',
-      },
     );
 
-    await this.translateModel.findByIdAndUpdate(
+    await this.translateModel.findByIdAndDelete(
       {
         _id: deleteImageFile.description,
-      },
-      {
-        status: 'inactive',
       },
     );
     await this.categoryModel.findByIdAndDelete({ _id: id });

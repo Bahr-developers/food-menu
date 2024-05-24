@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { Category } from '../../category/schemas';
 import { Restourant } from '../../restourant/schemas';
-import { Translate } from '../../translate';
+import { Translate } from '../../localisation/translate';
 enum food_status {
     available = 'available',
     none = 'none',
@@ -37,6 +37,9 @@ export class Food {
 
     @Prop({ enum: status, default: status.active })
     status: string;
+
+    @Prop({ type: Number, required: false })
+    preparing_time?: number;
 
     @Prop({type:Types.UUID, ref: "Restourant", required: true })
     restourant_id: Restourant

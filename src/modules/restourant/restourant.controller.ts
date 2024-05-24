@@ -11,7 +11,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { CreateRestourantDto, UpdateRestourantDto } from './dtos';
+import { AddOneSocialDto, CreateRestourantDto, DeleteOneSocialDto, UpdateRestourantDto } from './dtos';
 import { Restourant } from './schemas';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RestourantService } from './restourant.service';
@@ -44,6 +44,13 @@ export class RestourantController {
   ): Promise<void> {
     return this.#_restourantService.createRestourant({ ...payload, image });
   }
+  
+  @Post('add/one/social')
+  async addOneSocial(
+    @Body() payload: AddOneSocialDto,
+  ) {
+    await this.#_restourantService.addOneSocial({ ...payload });
+  }
 
   @ApiConsumes('multipart/form-data')
   @Patch('edit/:id')
@@ -58,6 +65,11 @@ export class RestourantController {
       id: restourantId,
       image,
     });
+  }
+
+  @Delete('delete/one/social')
+  async deleteOneSocial(@Body() payload: DeleteOneSocialDto): Promise<void> {
+    await this.#_restourantService.deleteOneSocial(payload);
   }
 
   @Delete('delete/:id')

@@ -7,25 +7,75 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Category } from './schemas';
 import { Model, isValidObjectId } from 'mongoose';
-import { Translate, TranslateService } from '../translate';
+import { Translate, TranslateService } from '../localisation/translate';
 import { MinioService } from '../../client';
 import { Restourant } from 'modules/restourant/schemas';
 import { GetSingleCategory } from './interfaces/get-single-category.interface';
+import { TranslateRestourant } from '../localisation_restaurant/translate.restaurant';
+import { RestourantTranslateService } from './../localisation_restaurant/translate.restaurant/restourant-translate.service';
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
+    @InjectModel(TranslateRestourant.name) private readonly translateRestourantModel: Model<TranslateRestourant>,
     @InjectModel(Restourant.name)
     private readonly restaurantModel: Model<Restourant>,
     @InjectModel(Translate.name)
     private readonly translateModel: Model<Translate>,
     private minioService: MinioService,
-    private readonly service: TranslateService,
+    private readonly service: RestourantTranslateService,
   ) {}
+
+  async createCategoryforRestourantLanguages(payload: CreateCategoryInterface): Promise<void> {
+    await this.#_checkExistingCategory(payload.name);
+    await this.checkRestourantTranslate(payload.name);
+    await this.checkRestaurant(payload.restaurant_id);
+    
+    let image = ''
+
+    if(payload.image){
+      const file = await this.minioService.uploadFile({
+        file: payload.image,
+        bucket: 'food-menu',
+      });
+      image = file.fileName
+    }
+
+    if (payload.category_id) {
+        const newCategoriy = await this.categoryModel.create({
+          name: payload.name,
+          image_url:image,
+          restaurant_id: payload.restaurant_id,
+          category_id: payload.category_id,
+        });
+
+      await this.categoryModel.findByIdAndUpdate(payload.category_id, {
+        $push: { subcategories: newCategoriy.id },
+      });
+
+      newCategoriy.save();
+    } else {
+      const newCategoriy = await this.categoryModel.create({
+        name: payload.name,
+        image_url:image,
+        restaurant_id: payload.restaurant_id,
+      });
+      newCategoriy.save();
+    }
+
+    await this.translateRestourantModel.findByIdAndUpdate(
+      {
+        _id: payload.name,
+      },
+      {
+        status: 'active',
+      },
+    );
+  }
 
   async createCategory(payload: CreateCategoryInterface): Promise<void> {
     await this.#_checkExistingCategory(payload.name);
-    await this.checkTranslate(payload.name);
+    await this.checkRestourantTranslate(payload.name);
     await this.checkRestaurant(payload.restaurant_id);
     
     
@@ -61,7 +111,7 @@ export class CategoryService {
       newCategoriy.save();
     }
 
-    await this.translateModel.findByIdAndUpdate(
+    await this.translateRestourantModel.findByIdAndUpdate(
       {
         _id: payload.name,
       },
@@ -74,7 +124,7 @@ export class CategoryService {
   async getCategoryById(payload:GetSingleCategory): Promise<Category[]> {
     const data = await this.categoryModel
       .find({_id:payload.categoryId, restaurant_id:payload.restaurant_id})
-      .select('name image_url category_id, food_status')
+      .select('name image_url category_id, food_status, restourant_id')
       .populate({
         path: 'subcategories',
         populate: {
@@ -93,9 +143,10 @@ export class CategoryService {
       const category: any = {};
 
       category.id = x._id;
-      const category_name = await this.service.getSingleTranslate({
+      const category_name = await this.service.getSingleRestourantTranslate({
         translateId: x.name.toString(),
         languageCode: payload.languageCode,
+        restourant_id: x.restaurant_id.toString()
       })
 
       category.name = category_name.value;      
@@ -105,24 +156,28 @@ export class CategoryService {
         foodss = null;
         foodss = item;
         foodss.name = (
-          await this.service.getSingleTranslate({
+          await this.service.getSingleRestourantTranslate({
             translateId: foodss.name.toString(),
             languageCode: payload.languageCode,
+            restourant_id: x.restaurant_id.toString()
           })
         ).value;
         for (let fod of item.foods) {
           foods = null;
           foods = fod;
           foods.name = (
-            await this.service.getSingleTranslate({
+            await this.service.getSingleRestourantTranslate({
               translateId: foods.name.toString(),
               languageCode: payload.languageCode,
+              restourant_id: x.restaurant_id.toString()
             })
           ).value;
           foods.description = (
-            await this.service.getSingleTranslate({
+            await this.service.getSingleRestourantTranslate({
               translateId: foods.description.toString(),
               languageCode: payload.languageCode,
+              restourant_id: x.restaurant_id.toString()
+
             })
           ).value;
 
@@ -144,7 +199,7 @@ export class CategoryService {
   async getCategoryList(languageCode: string): Promise<Category[]> {
     const data = await this.categoryModel
       .find()
-      .select('name image_url category_id, food_status')
+      .select('name image_url category_id, food_status, restaurant_id')
       .populate({
         path: 'subcategories',
         populate: {
@@ -152,7 +207,7 @@ export class CategoryService {
         },
       })
       .exec();
-
+      
     let result = [];
 
     for (let x of data) {
@@ -162,10 +217,12 @@ export class CategoryService {
       let food = [];
       const category: any = {};
 
-      category.id = x._id;
-      const category_name = await this.service.getSingleTranslate({
+      category.id = x._id;  
+      console.log(x.id);
+      const category_name = await this.service.getSingleRestourantTranslate({
         translateId: x.name.toString(),
         languageCode: languageCode,
+        restourant_id: x?.restaurant_id?.toString()
       })
 
       category.name = category_name.value;      
@@ -175,24 +232,27 @@ export class CategoryService {
         foodss = null;
         foodss = item;
         foodss.name = (
-          await this.service.getSingleTranslate({
+          await this.service.getSingleRestourantTranslate({
             translateId: foodss.name.toString(),
             languageCode: languageCode,
+            restourant_id: x?.restaurant_id?.toString()
           })
         ).value;
         for (let fod of item.foods) {
           foods = null;
           foods = fod;
           foods.name = (
-            await this.service.getSingleTranslate({
+            await this.service.getSingleRestourantTranslate({
               translateId: foods.name.toString(),
               languageCode: languageCode,
+              restourant_id: x?.restaurant_id?.toString()
             })
           ).value;
           foods.description = (
-            await this.service.getSingleTranslate({
+            await this.service.getSingleRestourantTranslate({
               translateId: foods.description.toString(),
               languageCode: languageCode,
+              restourant_id: x?.restaurant_id?.toString()
             })
           ).value;
 
@@ -221,7 +281,7 @@ export class CategoryService {
 
     const data = await this.categoryModel
       .find({ restaurant_id: restaurantId})
-      .select('name image_url category_id')
+      .select('name image_url category_id, restourant_id')
       .populate({
         path: 'subcategories',
         populate: {
@@ -242,9 +302,10 @@ export class CategoryService {
   
         category.id = x._id;
         category.name = (
-          await this.service.getSingleTranslate({
+          await this.service.getSingleRestourantTranslate({
             translateId: x.name.toString(),
             languageCode: languageCode,
+            restourant_id: x?.restaurant_id?.toString()
           })
         ).value;
         category.image_url = x.image_url;
@@ -253,24 +314,27 @@ export class CategoryService {
           foodss = null;
           foodss = item;
           foodss.name = (
-            await this.service.getSingleTranslate({
+            await this.service.getSingleRestourantTranslate({
               translateId: foodss.name.toString(),
               languageCode: languageCode,
+              restourant_id: x?.restaurant_id?.toString()
             })
           ).value;
           for (let fod of item.foods) {
               foods = null;              
               foods = fod;
               foods.name = (
-                await this.service.getSingleTranslate({
+                await this.service.getSingleRestourantTranslate({
                   translateId: foods.name.toString(),
                   languageCode: languageCode,
+                  restourant_id: x?.restaurant_id?.toString()
                 })
               ).value;
               foods.description = (
-                await this.service.getSingleTranslate({
+                await this.service.getSingleRestourantTranslate({
                   translateId: foods.description.toString(),
                   languageCode: languageCode,
+                  restourant_id: x?.restaurant_id?.toString()
                 })
               ).value;        
             food.push(foods);
@@ -316,9 +380,10 @@ export class CategoryService {
 
       category.id = x._id;
       category.name = (
-        await this.service.getSingleTranslate({
+        await this.service.getSingleRestourantTranslate({
           translateId: x.name.toString(),
           languageCode: languageCode,
+          restourant_id: x?.restaurant_id?.toString()
         })
       ).value;
       category.image_url = x.image_url;
@@ -327,24 +392,27 @@ export class CategoryService {
         foodss = null;
         foodss = item;
         foodss.name = (
-          await this.service.getSingleTranslate({
+          await this.service.getSingleRestourantTranslate({
             translateId: foodss.name.toString(),
             languageCode: languageCode,
+            restourant_id: x?.restaurant_id?.toString()
           })
         ).value;
         for (let fod of item.foods) {
             foods = null;
             foods = fod;
             foods.name = (
-              await this.service.getSingleTranslate({
+              await this.service.getSingleRestourantTranslate({
                 translateId: foods.name.toString(),
                 languageCode: languageCode,
+                restourant_id: x?.restaurant_id?.toString()
               })
             ).value;
             foods.description = (
-              await this.service.getSingleTranslate({
+              await this.service.getSingleRestourantTranslate({
                 translateId: foods.description.toString(),
                 languageCode: languageCode,
+                restourant_id: x?.restaurant_id?.toString()
               })
             ).value;
   
@@ -373,12 +441,12 @@ export class CategoryService {
       })
     }
     if(payload.name){
-      await this.checkTranslate(payload.name);
-      await this.translateModel.findByIdAndDelete(category.name)
+      await this.checkRestourantTranslate(payload.name);
+      await this.translateRestourantModel.findByIdAndDelete(category.name)
       await this.categoryModel.findByIdAndUpdate(payload.id, {
         name:payload.name
       })
-      await this.translateModel.findByIdAndUpdate(
+      await this.translateRestourantModel.findByIdAndUpdate(
         {
           _id: payload.name,
         },
@@ -443,12 +511,12 @@ export class CategoryService {
     }
   }
 
-  async checkTranslate(id: string): Promise<void> {
+  async checkRestourantTranslate(id: string): Promise<void> {
     await this.#_checkId(id);
-    const translate = await this.translateModel.findById(id);
+    const restourant_translate = await this.translateRestourantModel.findById(id);
 
-    if (!translate) {
-      throw new ConflictException(`Translate with ${id} is not exists`);
+    if (!restourant_translate) {
+      throw new ConflictException(`RestourantTranslate with ${id} is not exists`);
     }
   }
 

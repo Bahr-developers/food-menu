@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
 import { Food } from '../../food/schemas';
-import { Translate } from '../../translate';
+import { Translate } from '../../localisation/translate';
 import { Restourant } from 'modules/restourant/schemas';
 
 export type CategoryDocument = HydratedDocument<Category>;

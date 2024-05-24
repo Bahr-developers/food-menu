@@ -1,8 +1,11 @@
 import {
+  AddOneSocialInterface,
   CreateRestourantInterface,
+  DeleteOneSocialInterface,
   UpdateRestourantRequest,
 } from './interfaces';
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnprocessableEntityException,
@@ -10,14 +13,21 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Restourant } from './schemas';
 import { Model, isValidObjectId } from 'mongoose';
-import { Translate, TranslateService } from '../translate';
+import { Translate, TranslateService } from '../localisation/translate';
 import { MinioService } from '../../client';
+import { Social } from '../social/schemas';
+import { RestourantTranslateService } from '../localisation_restaurant/translate.restaurant';
+import { TranslateRestourant, TranslateRestourantSchema } from './../localisation_restaurant/translate.restaurant/schemas/translate.schema';
 
 @Injectable()
 export class RestourantService {
   constructor(
     @InjectModel(Restourant.name)
     private readonly restourantModel: Model<Restourant>,
+    @InjectModel(Social.name)
+    private readonly socialModel: Model<Social>,
+    @InjectModel(TranslateRestourant.name)
+    private readonly restourantTranslateModel: Model<TranslateRestourant>,
     @InjectModel(Translate.name)
     private readonly translateModel: Model<Translate>,
     private minioService: MinioService,
@@ -28,6 +38,62 @@ export class RestourantService {
     await this.#_checkExistingRestourant(payload.name);
     await this.checkTranslate(payload.name);
 
+    let description = ''
+    let location = ''
+    let tel = ''
+    let service_percent = ''
+    let social = []
+
+    if(payload.description){
+      await this.checkTranslate(payload.description)
+      description = payload.description
+      await this.translateModel.findByIdAndUpdate(
+        {
+          _id: payload.description,
+        },
+        {
+          status: 'active',
+        },
+      );
+    }
+    if(payload.location){
+      await this.checkTranslate(payload.location)
+      location = payload.location
+      await this.translateModel.findByIdAndUpdate(
+        {
+          _id: payload.location,
+        },
+        {
+          status: 'active',
+        },
+      );
+    }
+    if(payload.tel){
+      tel = payload.tel
+    }
+    if(payload.service_percent){
+      service_percent = payload.service_percent
+    }
+    if(payload.socials){
+      let sociaals = JSON.parse(payload.socials.toString())      
+      for(const item of sociaals){
+        if(!item.link){
+          throw new BadRequestException("Link must be not empt")
+        }
+        if(!item.social_id){
+          throw new BadRequestException("social_id must be not empt")
+        }else{
+          await this.#_checkId(item.social_id)
+          const socials = await this.socialModel.findById(item.social_id)
+          if(!socials){
+          throw new BadRequestException("Social is don't have")
+          }else{
+            social.push(item)
+          }
+        }
+      }
+    }
+
     const file = await this.minioService.uploadFile({
       file: payload.image,
       bucket: 'food-menu',
@@ -35,8 +101,11 @@ export class RestourantService {
 
     const newRestourant = await this.restourantModel.create({
       name: payload.name,
-      description: payload.description,
-      location: payload.location,
+      description: description,
+      location: location,
+      tel: tel,
+      service_percent: service_percent,
+      socials: social,
       image_url: file.fileName,
     });
 
@@ -48,58 +117,66 @@ export class RestourantService {
         status: 'active',
       },
     );
-    await this.translateModel.findByIdAndUpdate(
-      {
-        _id: payload.description,
-      },
-      {
-        status: 'active',
-      },
-    );
-    await this.translateModel.findByIdAndUpdate(
-      {
-        _id: payload.location,
-      },
-      {
-        status: 'active',
-      },
-    );
     newRestourant.save();
   }
 
   async getRestourantList(languageCode: string): Promise<Restourant[]> {
     const data = await this.restourantModel
       .find()
-      .select('name description location image_url')
+      .select('name description location image_url tel service_percent socials')
       .exec();
 
     let result = [];
+    let forsocial = []
+    let socials = []
+    let value = ''
+    let social = []
+    let social_item = {}
     for (let x of data) {
       const name_request = {
         translateId: x.name.toString(),
         languageCode: languageCode,
+        restourant_id: x.id
       };
 
-      const description_request = {
-        translateId: x.description.toString(),
-        languageCode: languageCode,
-      };
-
+      if(x.description?.length){
+        const description_request = {
+          translateId: x.description.toString(),
+          languageCode: languageCode,
+          restourant_id: x.id
+        };
+        
+        const translated_description = await this.service.getSingleTranslate(
+          description_request,
+        )
+        value = translated_description.value
+        }
+        
       const translated_name = await this.service.getSingleTranslate(
         name_request,
       );
-      const translated_description = await this.service.getSingleTranslate(
-        description_request,
-      );
-      result.push({
-        id: x._id,
-        name: translated_name.value,
-        description: translated_description.value,
-        image_url: x.image_url,
-        location: x.location,
+      
+
+      forsocial.push({
+        socials:x.socials
       });
-    }
-    
+
+      for(const item of forsocial){
+        for(const social of item.socials){
+          socials.push({link:social.link, socials:await this.socialModel.findById(social.social_id)})
+        }
+        result.push({
+          id: x._id,
+          name: translated_name.value,
+          description: value,
+          image_url: x.image_url,
+          location: x.location,
+          tel: x.tel,
+          percent: x.service_percent,
+          socials: socials    
+        })
+      }
+    }    
     return result;
   }
 
@@ -159,6 +236,22 @@ export class RestourantService {
         },
       );
     }
+    if(payload.tel){
+      await this.restourantModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          tel: payload.tel
+        },
+      );
+    }
+    if(payload.service_percent){
+      await this.restourantModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          service_percent: payload.service_percent
+        },
+      );
+    }
     if(payload.image){
         const deleteImageFile = await this.restourantModel.findById(payload.id);
       
@@ -177,6 +270,36 @@ export class RestourantService {
     }
   }
 
+  
+  async addOneSocial(payload: AddOneSocialInterface): Promise<void> {
+    await this.#_checkRestaurant(payload.restaurant_id);
+    await this.#_checkSocial(payload.social.social_id)
+
+    await this.restourantModel.findByIdAndUpdate(payload.restaurant_id, {
+      $push: { socials: {social_id:payload.social.social_id, link: payload.social.link} },
+    });
+  }
+
+  async deleteOneSocial(payload: DeleteOneSocialInterface): Promise<void> {
+    await this.#_checkRestaurant(payload.restourant_id);
+    await this.#_checkSocial(payload.social_id)
+
+    const newSocils = []
+
+    const foundedRestourant = await this.restourantModel.findById(payload.restourant_id);
+
+    for(const item of foundedRestourant.socials){
+      if(item.social_id==payload.social_id){
+        continue
+      }else{
+        newSocils.push(item)
+      }
+    }
+    await this.restourantModel.findByIdAndUpdate({_id: payload.restourant_id}, {
+      socials: newSocils
+    })
+  }
+
   async deleteRestourant(id: string): Promise<void> {
     await this.#_checkRestourant(id);
     const restourant = await this.restourantModel.findById(id)
@@ -189,7 +312,7 @@ export class RestourantService {
         _id: deleteImageFile.name,
       },
     );
-    await this.translateModel.findByIdAndDelete(restourant.name)
+    await this.restourantTranslateModel.findByIdAndDelete(restourant.name)
     await this.translateModel.findByIdAndDelete(restourant.description)
     await this.translateModel.findByIdAndDelete(restourant.location)
 
@@ -224,10 +347,28 @@ export class RestourantService {
 
   async checkTranslate(id: string): Promise<void> {
     await this.#_checkId(id);
-    const translate = await this.translateModel.findById(id);
+    const translate = await this.restourantTranslateModel.findById(id);
 
     if (!translate) {
       throw new ConflictException(`Translate with ${id} is not exists`);
+    }
+  }
+
+  async #_checkSocial(id: string): Promise<void> {
+    await this.#_checkId(id);
+    const social = await this.socialModel.findById(id);
+
+    if (!social) {
+      throw new ConflictException(`Social with ${id} is not exists`);
+    }
+  }
+
+  async #_checkRestaurant(id: string): Promise<void> {
+    await this.#_checkId(id);
+    const restaurant = await this.restourantModel.findById(id);
+
+    if (!restaurant) {
+      throw new ConflictException(`Restaurant with ${id} is not exists`);
     }
   }
 }

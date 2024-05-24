@@ -1,0 +1,5 @@
+export * from './create-restourant-translate.interfaces'
+export * from './get-single-restourant-translate.interfaces'
+export * from './update-restourant-translate.interfaces'
+export * from './restourant-definition-update.interfaces'
+export * from './get-single-restourant-translate-bycode.interface'

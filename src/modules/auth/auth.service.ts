@@ -10,7 +10,6 @@ import {
   } from '@nestjs/common';
   import { InjectModel } from '@nestjs/mongoose';
   import { Model, isValidObjectId } from 'mongoose';
-  import { Translate, TranslateService } from '../translate';
   import { User } from '../user/schemas';
   import * as bcrypt from 'bcrypt'
 

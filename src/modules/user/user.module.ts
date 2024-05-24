@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Language, LanguageSchema } from '../language';
-import { Definition, DefinitionSchema, Translate, TranslateSchema, TranslateService } from '../translate';
+import { Language, LanguageSchema } from '../localisation/language';
+import { Definition, DefinitionSchema, Translate, TranslateSchema, TranslateService } from '../localisation/translate';
 import { Restourant, RestourantSchema } from '../restourant/schemas';
 import { User, UserSchema } from './schemas';
 import { UserController } from './user.controller';

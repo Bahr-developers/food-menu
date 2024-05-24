@@ -1,12 +1,13 @@
 import {
   ConflictException,
   Injectable,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Food } from './schemas';
 import { Model, isValidObjectId } from 'mongoose';
-import { Definition, Translate, TranslateService } from '../translate';
+import { Definition, Translate, TranslateService } from '../localisation/translate';
 import {
   AddOneFoodImageInterface,
   CreateFoodInterface,
@@ -15,54 +16,63 @@ import {
 import { Category } from '../category/schemas';
 import { Restourant } from '../restourant/schemas';
 import { v4 as uuidv4 } from 'uuid';
-import { Language } from '../language';
+import { Language } from '../localisation/language';
 import { MinioService } from '../../client';
 import { SearchFoodInterface } from './interfaces/search-food.interface';
 import { DeleteFoodImageDto } from './dtos';
+import { LanguageRestourant } from '../localisation_restaurant/language.restaurant';
+import { TranslateRestourant, TranslateRestourantSchema } from './../localisation_restaurant/translate.restaurant/schemas/translate.schema';
+import { DefinitionRestourant, RestourantTranslateService } from '../localisation_restaurant/translate.restaurant';
 
 @Injectable()
 export class FoodService {
   constructor(
     @InjectModel(Food.name) private readonly foodModel: Model<Food>,
-    @InjectModel(Translate.name)
-    private readonly translateModel: Model<Translate>,
+    @InjectModel(TranslateRestourant.name)
+    private readonly translateRestourantModel: Model<TranslateRestourant>,
     @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
+    @InjectModel(LanguageRestourant.name) private readonly languageRestourantModel: Model<LanguageRestourant>,
     @InjectModel(Restourant.name)
     private readonly restourantModel: Model<Restourant>,
-    @InjectModel(Language.name) private readonly languageModel: Model<Language>,
-    @InjectModel(Definition.name)
-    private readonly definitionModel: Model<Definition>,
+    @InjectModel(DefinitionRestourant.name)
+    private readonly definitionRestourantModel: Model<DefinitionRestourant>,
     private minioService: MinioService,
-    private readonly service: TranslateService,
+    private readonly service: RestourantTranslateService,
   ) {}
 
   async createFood(payload: CreateFoodInterface): Promise<void> {
     await this.#_checkCategory(payload.category_id);
     await this.#_checkRestourant(payload.restourant_id);
+    let preparing_time = 0
+    let translate_name = ""
+    let descriptionn = ''
 
     const name = JSON.parse(`${payload.name}`);
     const name_kays_array = Object.keys(name);
-    const description = JSON.parse(`${payload.description}`);
-    const description_kays_array = Object.keys(description);
+    if(payload?.description){
+      const description = JSON.parse(`${payload.description}`);
+      const description_kays_array = Object.keys(description);
+      for (let languageCode of description_kays_array) {
+        await this.#_checkLanguage(languageCode, payload.restourant_id);
+      }
+      descriptionn = await this.service.createTranslate({
+        code: uuidv4(),
+        definition: description,
+        type: 'content',
+        restourant_id: payload.restourant_id
+      });
+    }
 
     for (let languageCode of name_kays_array) {
-      await this.#_checkLanguage(languageCode);
-    }
+        await this.#_checkLanguage(languageCode, payload.restourant_id)
+      }
+      translate_name = await this.service.createTranslate({
+        code: uuidv4(),
+        definition: name,
+        type: 'content',
+        restourant_id: payload.restourant_id
+      });
 
-    for (let languageCode of description_kays_array) {
-      await this.#_checkLanguage(languageCode);
-    }
-
-    const translate_name = await this.service.createTranslate({
-      code: uuidv4(),
-      definition: name,
-      type: 'content',
-    });
-    const translate_description = await this.service.createTranslate({
-      code: uuidv4(),
-      definition: description,
-      type: 'content',
-    });
 
     const files = [];
 
@@ -74,19 +84,26 @@ export class FoodService {
       files.push(fileNames.fileName);
     }
 
+    if(payload?.preparing_time){
+      preparing_time = Number(payload.preparing_time)
+    }
+
     const newFood = await this.foodModel.create({
       name: translate_name,
-      description: translate_description,
+      description: descriptionn,
       price: payload.price,
+      preparing_time: preparing_time,
       category_id: payload.category_id,
       restourant_id: payload.restourant_id,
       image_urls: files,
     });
+    console.log(newFood);
+    
     await this.categoryModel.findByIdAndUpdate(payload.category_id, {
       $push: { foods: newFood.id },
     });
 
-    await this.translateModel.findByIdAndUpdate(
+    await this.translateRestourantModel.findByIdAndUpdate(
       {
         _id: translate_name,
       },
@@ -95,9 +112,9 @@ export class FoodService {
       },
     );
 
-    await this.translateModel.findByIdAndUpdate(
+    await this.translateRestourantModel.findByIdAndUpdate(
       {
-        _id: translate_description,
+        _id: descriptionn,
       },
       {
         status: 'active',
@@ -137,25 +154,29 @@ export class FoodService {
   async getFoodList(languageCode: string): Promise<Food[]> {
     const data = await this.foodModel
       .find()
-      .select('name description image_urls price food_status, restourant_id')
+      .select('name description image_urls price food_status restourant_id preparing_time')
       .exec();
+      console.log(data);
+      
 
     let result = [];
     for (let x of data) {
       const name_request = {
         translateId: x.name.toString(),
         languageCode: languageCode,
+        restourant_id: x.restourant_id.toString()
       };
 
       const desription_request = {
         translateId: x.description.toString(),
         languageCode: languageCode,
+        restourant_id: x.restourant_id.toString()
       };
 
-      const translated_name = await this.service.getSingleTranslate(
+      const translated_name = await this.service.getSingleRestourantTranslate(
         name_request,
       );
-      const translated_description = await this.service.getSingleTranslate(
+      const translated_description = await this.service.getSingleRestourantTranslate(
         desription_request,
       );
       result.push({
@@ -164,6 +185,7 @@ export class FoodService {
         description: translated_description.value,
         image_urls: x.image_urls,
         price: x.price,
+        preparing_time:x.preparing_time,
         restourant_id: x.restourant_id,
         food_status: x.food_status,
       });
@@ -192,34 +214,34 @@ export class FoodService {
       );
     }
 
-    if (payload.name) {
-      const name = JSON.parse(`${payload.name}`);
-      const name_kays_array = Object.keys(name);
-      for (let languageCode of name_kays_array) {
-        await this.#_checkLanguage(languageCode);
-      }
+    if (payload.name) {      
+      // const name = JSON.parse(`${payload.name}`);
+      const name_kays_array = Object.keys(payload.name);
       const translatefindByID = await this.foodModel.findById(payload.id);
+      for (let languageCode of name_kays_array) {
+        await this.#_checkLanguage(languageCode, translatefindByID.restourant_id.toString());
+      }
 
-      const translate = await this.translateModel.findById(
+      const translate = await this.translateRestourantModel.findById(
         translatefindByID.name,
       );        
 
-      await this.definitionModel.deleteMany({ translateId: translate.id });
+      await this.definitionRestourantModel.deleteMany({ translateId: translate.id });
 
-      await this.translateModel.findByIdAndUpdate(payload.id, {
+      await this.translateRestourantModel.findByIdAndUpdate(payload.id, {
         definitions: [],
       });
 
       for (const item of name_kays_array) {
-        const language = await this.languageModel.findOne({ code: item });
+        const language = await this.languageRestourantModel.findOne({ code: item });
 
-        const newDefinition = await this.definitionModel.create({
+        const newDefinition = await this.definitionRestourantModel.create({
           languageId: language.id,
           translateId: translate.id,
-          value: name[item],
+          value: payload.name[item],
         });
 
-        await this.translateModel.findByIdAndUpdate(translate.id, {
+        await this.translateRestourantModel.findByIdAndUpdate(translate.id, {
           $push: { definitions: newDefinition.id },
         });
         newDefinition.save();
@@ -227,33 +249,33 @@ export class FoodService {
     }
 
     if (payload.description) {
-      const description = JSON.parse(`${payload.description}`);
-      const description_kays_array = Object.keys(description);
-      for (let languageCode of description_kays_array) {
-        await this.#_checkLanguage(languageCode);
-      }
+      // const description = JSON.parse(`${payload.description.toString()}`);
+      const description_kays_array = Object.keys(payload.description);
       const translatefindByID = await this.foodModel.findById(payload.id);
+      for (let languageCode of description_kays_array) {
+        await this.#_checkLanguage(languageCode, translatefindByID.restourant_id.toString());
+      }
 
-      const translate = await this.translateModel.findById(
+      const translate = await this.translateRestourantModel.findById(
         translatefindByID.description,
       );
 
-      await this.definitionModel.deleteMany({ translateId: translate.id });
+      await this.definitionRestourantModel.deleteMany({ translateId: translate.id });
 
-      await this.translateModel.findByIdAndUpdate(payload.id, {
+      await this.translateRestourantModel.findByIdAndUpdate(payload.id, {
         definitions: [],
       });
 
       for (const item of description_kays_array) {
-        const language = await this.languageModel.findOne({ code: item });
+        const language = await this.languageRestourantModel.findOne({ code: item });
 
-        const newDefinition = await this.definitionModel.create({
+        const newDefinition = await this.definitionRestourantModel.create({
           languageId: language.id,
           translateId: translate.id,
-          value: description[item],
+          value: payload.description[item],
         });
 
-        await this.translateModel.findByIdAndUpdate(translate.id, {
+        await this.translateRestourantModel.findByIdAndUpdate(translate.id, {
           $push: { definitions: newDefinition.id },
         });
         newDefinition.save();
@@ -265,6 +287,15 @@ export class FoodService {
         { _id: payload.id },
         {
           price: payload.price,
+        },
+      );
+    }
+
+    if (payload.preparing_time) {
+      await this.foodModel.findByIdAndUpdate(
+        { _id: payload.id },
+        {
+          preparing_time: Number(payload.preparing_time),
         },
       );
     }
@@ -310,20 +341,18 @@ export class FoodService {
         .catch((undefined) => undefined);
     }
 
-    await this.translateModel.findByIdAndDelete(
+    await this.translateRestourantModel.findByIdAndDelete(
       {
         _id: deleteImageFile.name,
       },
     );
 
-    await this.translateModel.findByIdAndDelete(
+    await this.translateRestourantModel.findByIdAndDelete(
       {
         _id: deleteImageFile.description,
       },
     );
-    await this.categoryModel.findByIdAndDelete({ _id: id });
-
-    await this.foodModel.findByIdAndDelete({ _id: id });
+    await this.foodModel.findByIdAndDelete({_id:id});
   }
 
   async #_checkExistingFood(name: string): Promise<void> {
@@ -372,20 +401,21 @@ export class FoodService {
 
   async checkTranslate(id: string): Promise<void> {
     await this.#_checkId(id);
-    const translate = await this.translateModel.findById(id);
+    const translate = await this.translateRestourantModel.findById(id);
 
     if (!translate) {
       throw new ConflictException(`Translate with ${id} is not exists`);
     }
   }
 
-  async #_checkLanguage(code: string): Promise<void> {
-    const language = await this.languageModel.findOne({
-      code,
+  async #_checkLanguage(code: string, restourant_id: string): Promise<void> {
+    const language = await this.languageRestourantModel.findOne({
+      code: code,
+      restourant_id: restourant_id
     });
 
-    if (!language) {
-      throw new ConflictException(`${language.title} is already available`);
+    if(!language){
+      throw new NotFoundException("Language not found")
     }
   }
 }

@@ -3,6 +3,7 @@ export declare interface UpdateFoodRequest {
   name?: object;
   description?: object;
   price?: string;
+  preparing_time?: string;
   food_status?: 'available' | 'none' | 'preparing';
   status?: 'active' | 'inactive';
 }

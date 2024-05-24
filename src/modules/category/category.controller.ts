@@ -77,6 +77,16 @@ export class CategoryController {
   }
 
   @ApiConsumes('multipart/form-data')
+  @Post('add-restourant-language')
+  @UseInterceptors(FileInterceptor('image'))
+  createCategoryforRestourantLanguages(
+    @Body() payload: CreateCategoryDto,
+    @UploadedFile() image: any,
+  ): Promise<void> {
+    return this.#_categoryService.createCategoryforRestourantLanguages({ ...payload, image });
+  }
+
+  @ApiConsumes('multipart/form-data')
   @Patch('edit/:id')
   @UseInterceptors(FileInterceptor('image'))
   async updateCategory(

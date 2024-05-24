@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { UpdateFoodRequest } from '../interfaces';
 
@@ -17,7 +17,6 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
     example: '{ "uz": "salom", "en": "salom"}',
     required: false,
   })
-  @IsString()
   @IsOptional()
   name?: object;
 
@@ -25,7 +24,6 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
     example: '{ "uz": "salom", "en": "salom"}',
     required: false,
   })
-  @IsString()
   @IsOptional()
   description?: object;
 
@@ -36,6 +34,14 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
   @IsString()
   @IsOptional()
   price?: string;
+
+  @ApiProperty({
+    example: '10',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  preparing_time?: string;
 
   @ApiProperty({
     examples: ['available', 'none', 'preparing'],

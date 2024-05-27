@@ -196,9 +196,9 @@ export class CategoryService {
     }
     return result;
   }
-  async getCategoryList(languageCode: string): Promise<Category[]> {
+  async getCategoryList(languageCode: string, restaurant_id:string): Promise<Category[]> {
     const data = await this.categoryModel
-      .find()
+      .find({restaurant_id: restaurant_id})
       .select('name image_url category_id, food_status, restaurant_id')
       .populate({
         path: 'subcategories',
@@ -218,7 +218,6 @@ export class CategoryService {
       const category: any = {};
 
       category.id = x._id;  
-      console.log(x.id);
       const category_name = await this.service.getSingleRestourantTranslate({
         translateId: x.name.toString(),
         languageCode: languageCode,

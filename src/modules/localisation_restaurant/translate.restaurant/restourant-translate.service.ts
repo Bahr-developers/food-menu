@@ -206,8 +206,6 @@ export class RestourantTranslateService {
 
   async #_checkRestourantTranslate(id: string): Promise<void> {
     await this.#_checkID(id);
-
-    console.log(await this.restourantTranslateModel.findOne({id: id}));
     
     const restourant_translate = await this.restourantTranslateModel.findById(id);
     

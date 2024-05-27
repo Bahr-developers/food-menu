@@ -35,11 +35,12 @@ export class FoodController {
     this.#_foodService = food;
   }
 
-  @Get('find/all')
+  @Get('find/all/:restourant_id')
   async getServiceList(
+    @Param("restourant_id") restourant_id: string,
     @Headers('accept-language') languageCode: string,
   ): Promise<Food[]> {
-    return await this.#_foodService.getFoodList(languageCode);
+    return await this.#_foodService.getFoodList(languageCode, restourant_id);
   }
 
   @Get(':restaurantId/search')

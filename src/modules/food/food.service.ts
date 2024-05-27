@@ -97,8 +97,7 @@ export class FoodService {
       restourant_id: payload.restourant_id,
       image_urls: files,
     });
-    console.log(newFood);
-    
+        
     await this.categoryModel.findByIdAndUpdate(payload.category_id, {
       $push: { foods: newFood.id },
     });
@@ -126,7 +125,7 @@ export class FoodService {
   async searchFood(payload: SearchFoodInterface): Promise<Food[]> {
     await this.#_checkRestourant(payload.restaurant_id);
 
-    const data = await this.getFoodList(payload.languageCode);
+    const data = await this.getFoodList(payload.languageCode, payload.restaurant_id);
     
     if (!payload.name.length || !data.length) {
       return data;
@@ -151,13 +150,11 @@ export class FoodService {
     return result;
   }
 
-  async getFoodList(languageCode: string): Promise<Food[]> {
+  async getFoodList(languageCode: string, restourant_id: string): Promise<Food[]> {    
     const data = await this.foodModel
-      .find()
+      .find({restourant_id: restourant_id})
       .select('name description image_urls price food_status restourant_id preparing_time')
       .exec();
-      console.log(data);
-      
 
     let result = [];
     for (let x of data) {

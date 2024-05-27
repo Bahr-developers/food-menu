@@ -28,11 +28,12 @@ export class CategoryController {
     this.#_categoryService = restourant;
   }
 
-  @Get('find/all')
+  @Get('find/all/:restourant_id')
   async getCategoryList(
+    @Param("restourant_id") restourant_id: string,
     @Headers('accept-language') languageCode: string,
   ): Promise<Category[]> {
-    return await this.#_categoryService.getCategoryList(languageCode);
+    return await this.#_categoryService.getCategoryList(languageCode, restourant_id);
   }
 
   @Get('find/:categoryId')

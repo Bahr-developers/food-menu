@@ -15,6 +15,9 @@ export class User {
     @Prop({type:String, required: true})
     password: string
 
+    @Prop({ type: String, required: false })
+    image_url?: string;
+
     @Prop({type:Types.UUID, ref: "Restourant", required: true })
     restourant_id: Restourant[]
 }

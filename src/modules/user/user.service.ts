@@ -12,6 +12,7 @@ import {
   import { Model, isValidObjectId } from 'mongoose';
   import { Restourant } from '../restourant/schemas';
   import * as bcrypt from 'bcrypt'
+import { MinioService } from '../../client';
   @Injectable()
   export class UserService {
     constructor(
@@ -19,16 +20,28 @@ import {
       private readonly userModel: Model<User>,
       @InjectModel(Restourant.name)
       private readonly restourantModel: Model<Restourant>,
+      private minioService: MinioService,
+
     ) {}
   
     async createUser(payload: CreateUserInterface): Promise<void> {
       await this.#_checkRestourant(payload.restourant_id);
+      let image = ''
+
+      if(payload.image){
+        const file = await this.minioService.uploadFile({
+          file: payload.image,
+          bucket: 'food-menu',
+        });
+        image = file.fileName
+      }
       const hashed_password = await bcrypt.hash(payload.password, 7)
   
       const newUser = await this.userModel.create({
         full_name: payload.full_name,
         phone: payload.phone,
         password:hashed_password,
+        image_url: image,
         restourant_id:payload.restourant_id
       });
       newUser.save();
@@ -37,7 +50,15 @@ import {
     async getUserList(): Promise<User[]> {
       const data = await this.userModel
         .find()
-        .select('full_name phone restourant_id password')
+        .select('full_name phone restourant_id password image_url')
+        .exec();
+      return data;
+    }
+  
+    async getUserByRestourantId(restaurant_id: string): Promise<User> {
+      const data = await this.userModel
+        .findOne({restaurant_id: restaurant_id})
+        .select('full_name phone restourant_id password image_url')
         .exec();
       return data;
     }
@@ -48,7 +69,7 @@ import {
         await this.userModel.findByIdAndUpdate(
           { _id: payload.id },
           {
-            name: payload.full_name,
+            full_name: payload.full_name,
           },
           );
         }
@@ -59,6 +80,20 @@ import {
               phone: payload.phone
             },
           );
+      }
+      if(payload.image){
+        const deleteImageFile = await this.userModel.findById(payload.id);
+        await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
+        const file = await this.minioService.uploadFile({
+          file: payload.image,
+          bucket: 'food-menu',
+        });
+        await this.userModel.findByIdAndUpdate(
+          { _id: payload.id },
+          {
+            image_url: file.fileName,
+          },
+        );
       }
       if(payload.password){
       const hashed_password = await bcrypt.hash(payload.password, 7)

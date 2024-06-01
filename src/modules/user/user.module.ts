@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { MinioService } from '../../client';
 import { Language, LanguageSchema } from '../localisation/language';
 import { Definition, DefinitionSchema, Translate, TranslateSchema, TranslateService } from '../localisation/translate';
 import { Restourant, RestourantSchema } from '../restourant/schemas';
@@ -19,6 +20,6 @@ import { UserService } from './user.service';
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService],
+  providers: [UserService, MinioService],
 })
 export class UserModule {}

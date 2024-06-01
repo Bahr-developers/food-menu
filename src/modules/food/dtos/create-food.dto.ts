@@ -24,12 +24,11 @@ export class CreateFoodDto implements CreateFoodInterface {
   price: string;
 
   @ApiProperty({
-    example: '10',
+    example: '{ "start_time": "10", "end_time": "20"}',
     required: false,
   })
   @IsOptional()
-  @IsString()
-  preparing_time?: string;
+  preparing_time?: object;
 
   @ApiProperty({
     example: '660d5290e49538271705501e',

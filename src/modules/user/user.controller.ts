@@ -33,22 +33,35 @@ import { UserService } from './user.service';
     ): Promise<User[]> {
       return await this.#_userService.getUserList();
     }
-  
-    @Post('add')
-    createUser(
-      @Body() payload: CreateUserDto,
-    ): Promise<void> {
-      return this.#_userService.createUser({ ...payload });
+    @Get('find/:restaurant_id')
+    async getUserByRestourantId(
+    @Param('restaurantId') restaurantId: string,
+    ): Promise<User> {
+      return await this.#_userService.getUserByRestourantId(restaurantId);
     }
   
+    @ApiConsumes('multipart/form-data')
+    @Post('add')
+    @UseInterceptors(FileInterceptor('image'))
+    createUser(
+      @Body() payload: CreateUserDto,
+      @UploadedFile() image: any,
+    ): Promise<void> {
+      return this.#_userService.createUser({ ...payload, image });
+    }
+  
+    @ApiConsumes('multipart/form-data')
     @Patch('edit/:id')
+    @UseInterceptors(FileInterceptor('image'))
     async updateUser(
       @Param('id') userId: string,
       @Body() payload: UpdateUserDto,
+      @UploadedFile() image: any,
     ): Promise<void> {
       await this.#_userService.updateUser({
         ...payload,
         id: userId,
+        image
       });
     }
   

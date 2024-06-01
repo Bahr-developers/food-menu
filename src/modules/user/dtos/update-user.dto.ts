@@ -18,18 +18,18 @@ export class UpdateUserDto implements Omit<UpdateUserInterface, 'id'>{
   phone?: string;
 
   @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required: false,
+  })
+  @IsOptional()
+  image?: any;
+
+  @ApiProperty({
     example: 'qwerty',
     required: false,
   })
   @IsOptional()
   @IsString()
   password?: string;
-
-  @ApiProperty({
-    example: '660d5290e49538271705501e',
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  restourant_id?: string;
 }

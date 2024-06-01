@@ -3,5 +3,5 @@ export declare interface UpdateUserInterface {
     full_name?: string;
     phone?:string;
     password?:string;
-    restourant_id?: string;
+    image?:any    
 }

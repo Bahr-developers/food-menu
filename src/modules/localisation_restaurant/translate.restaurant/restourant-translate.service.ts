@@ -76,7 +76,7 @@ export class RestourantTranslateService {
     const restourant_translate = await this.restourantTranslateModel.create({
       code: payload.code,
       type: payload.type,
-      restourant_id: payload.restourant_id,
+      restaurant_id: payload.restourant_id,
       status: 'inactive',
     });
 

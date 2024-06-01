@@ -1,4 +1,4 @@
-import { IsString, IsArray, IsNumber, IsPhoneNumber } from 'class-validator';
+import { IsString, IsArray, IsNumber, IsPhoneNumber, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { CreateUserInterface } from '../interfaces';
 
@@ -15,6 +15,14 @@ export class CreateUserDto implements CreateUserInterface {
   })
   @IsPhoneNumber('UZ')
   phone: string;
+
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required:false
+  })
+  @IsOptional()
+  image?: any;
 
   @ApiProperty({
     example:"qwerty",

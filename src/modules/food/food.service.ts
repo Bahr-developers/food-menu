@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -43,9 +44,9 @@ export class FoodService {
   async createFood(payload: CreateFoodInterface): Promise<void> {
     await this.#_checkCategory(payload.category_id);
     await this.#_checkRestourant(payload.restourant_id);
-    let preparing_time = 0
     let translate_name = ""
     let descriptionn = ''
+    let preparing_time: any = {}
 
     const name = JSON.parse(`${payload.name}`);
     const name_kays_array = Object.keys(name);
@@ -61,6 +62,15 @@ export class FoodService {
         type: 'content',
         restourant_id: payload.restourant_id
       });
+    }
+    if(payload?.preparing_time){
+      preparing_time = JSON.parse(`${payload.preparing_time}`);
+      const preparing_time_kays_array = Object.keys(preparing_time);
+      for (let keys of preparing_time_kays_array) {
+        if(keys!="start_time" && keys!="end_time"){
+          throw new BadRequestException(`${keys} is not found`)
+        }
+      }
     }
 
     for (let languageCode of name_kays_array) {
@@ -82,10 +92,6 @@ export class FoodService {
         bucket: 'food-menu',
       });
       files.push(fileNames.fileName);
-    }
-
-    if(payload?.preparing_time){
-      preparing_time = Number(payload.preparing_time)
     }
 
     const newFood = await this.foodModel.create({

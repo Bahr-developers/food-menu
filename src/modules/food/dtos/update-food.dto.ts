@@ -36,12 +36,11 @@ export class UpdateFoodDto implements Omit<UpdateFoodRequest, 'id'> {
   price?: string;
 
   @ApiProperty({
-    example: '10',
+    example: '{ "uz": "salom", "en": "salom"}',
     required: false,
   })
   @IsOptional()
-  @IsString()
-  preparing_time?: string;
+  preparing_time?: object;
 
   @ApiProperty({
     examples: ['available', 'none', 'preparing'],

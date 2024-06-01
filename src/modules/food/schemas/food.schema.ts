@@ -38,8 +38,8 @@ export class Food {
     @Prop({ enum: status, default: status.active })
     status: string;
 
-    @Prop({ type: Number, required: false })
-    preparing_time?: number;
+    @Prop({ type: Object, required: false })
+    preparing_time?: object;
 
     @Prop({type:Types.UUID, ref: "Restourant", required: true })
     restourant_id: Restourant

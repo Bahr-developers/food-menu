@@ -34,10 +34,10 @@ export class RestourantLanguageService {
     newLanguage.save();
   }
 
-  async getLanguageList(): Promise<LanguageRestourant[]> {
+  async getLanguageList(restaurantId: string): Promise<LanguageRestourant[]> {
     return await this.restourantLanguageModel
-      .find()
-      .select(['title', 'id', 'code', 'restourant_id'])
+      .find({restaurantId})
+      .select(['title', 'id', 'code', 'image_url', 'restourant_id'])
       .exec();
   }
 

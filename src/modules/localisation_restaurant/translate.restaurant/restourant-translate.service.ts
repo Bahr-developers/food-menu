@@ -32,9 +32,9 @@ export class RestourantTranslateService {
     private readonly languageModel: Model<Language>,
   ) {}
 
-  async getRestourantTranslateList(): Promise<TranslateRestourant[]> {
+  async getRestourantTranslateList(restaurantId: string): Promise<TranslateRestourant[]> {
     const data =  await this.restourantTranslateModel
-    .find()
+    .find({restaurantId})
     .select(["-updatedAt", "-createdAt"])
     .populate({ path: 'definitions', populate: { path: 'languageId' } })
     .exec();

@@ -26,9 +26,9 @@ export class RestourantTranslateController {
     this.#_service = service;
   }
 
-  @Get()
-  async getRestourantTranslateList(): Promise<TranslateRestourant[]> {
-    return await this.#_service.getRestourantTranslateList();
+  @Get(":restaurantId")
+  async getRestourantTranslateList(@Param("restaurantId") id: string): Promise<TranslateRestourant[]> {
+    return await this.#_service.getRestourantTranslateList(id);
   }
 
   @Get('single/:code')

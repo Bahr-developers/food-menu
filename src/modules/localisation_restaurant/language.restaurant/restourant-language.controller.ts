@@ -20,9 +20,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class RestourantLanguageController {
   constructor(private readonly restourantLanguageService: RestourantLanguageService) {}
   
-  @Get()
-  async findAll(): Promise<LanguageRestourant[]> {
-    return this.restourantLanguageService.getLanguageList();
+  @Get(":restaurantId")
+  async findAll(@Param("restaurantId") id: string): Promise<LanguageRestourant[]> {
+    return this.restourantLanguageService.getLanguageList(id);
   }
 
   @ApiConsumes('multipart/form-data')

@@ -16,7 +16,7 @@ export class LanguageRestourant {
   image_url: string;
 
   @Prop({type: [Types.ObjectId], ref: "Restourant", required: true })
-  restourant_id: Restourant[]
+  restourant_id: Restourant
 }
 
 export const LanguageRestourantSchema = SchemaFactory.createForClass(LanguageRestourant);

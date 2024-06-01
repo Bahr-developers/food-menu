@@ -36,8 +36,9 @@ export class RestourantLanguageService {
 
   async getLanguageList(restaurantId: string): Promise<LanguageRestourant[]> {
     return await this.restourantLanguageModel
-      .find({restaurantId})
-      .select(['title', 'id', 'code', 'image_url', 'restourant_id'])
+      .find()
+      .populate("Restourant")
+      .select('title id code image_url restourant_id')
       .exec();
   }
 

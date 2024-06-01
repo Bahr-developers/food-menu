@@ -110,7 +110,7 @@ export class RestourantTranslateService {
   async getSingleRestourantTranslate(
     payload: GetSingleRestourantTranslateRequest,
     ): Promise<GetSingleRestourantTranslateResponse> {
-    await this.#_checkRestourantTranslate(payload.translateId);
+    // await this.#_checkRestourantTranslate(payload.translateId);
     await this.#_checkRestourantLanguage(payload.languageCode, payload.restourant_id)
       
     const restourant_language = await this.restourantLanguageModel.findOne({
@@ -119,6 +119,10 @@ export class RestourantTranslateService {
     });
 
     const restourant_translate = await this.restourantTranslateModel.findById(payload.translateId);
+
+    if(!restourant_translate) return {
+      value: "Translate not found"
+    }
         
 
     const restourant_definition = await this.restourantDefinitionModel.findOne({

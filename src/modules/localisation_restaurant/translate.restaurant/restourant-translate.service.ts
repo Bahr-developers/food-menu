@@ -8,7 +8,15 @@ import { Model, isValidObjectId } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { DefinitionRestourant, TranslateRestourant } from './schemas';
 import { LanguageRestourant } from '../language.restaurant';
-import { CreateRestourantTranslateInterface, GetSingleRestourantTranslateByCodeRequest, GetSingleRestourantTranslateByCodeResponse, GetSingleRestourantTranslateRequest, GetSingleRestourantTranslateResponse, RestourantDefinitionUpdateRequest, UpdateRestourantTranslateRequest } from './interfaces';
+import {
+  CreateRestourantTranslateInterface,
+  GetSingleRestourantTranslateByCodeRequest,
+  GetSingleRestourantTranslateByCodeResponse,
+  GetSingleRestourantTranslateRequest,
+  GetSingleRestourantTranslateResponse,
+  RestourantDefinitionUpdateRequest,
+  UpdateRestourantTranslateRequest,
+} from './interfaces';
 import { Restourant } from '../../restourant/schemas';
 import { Language } from '../../localisation/language';
 import { Definition, Translate } from '../../localisation/translate';
@@ -32,27 +40,34 @@ export class RestourantTranslateService {
     private readonly languageModel: Model<Language>,
   ) {}
 
-  async getRestourantTranslateList(restaurantId: string): Promise<TranslateRestourant[]> {
-    const data =  await this.restourantTranslateModel
-    .find({restaurantId})
-    .select(["-updatedAt", "-createdAt"])
-    .populate({ path: 'definitions', populate: { path: 'languageId' } })
-    .exec();
+  async getRestourantTranslateList(
+    restaurantId: string,
+  ): Promise<TranslateRestourant[]> {
+    const data = await this.restourantTranslateModel
+      .find({ restaurant_id: restaurantId })
+      .select(['-updatedAt', '-createdAt'])
+      .populate({ path: 'definitions', populate: { path: 'languageId' } })
+      .exec();
 
-    return data
+    return data;
   }
 
   async getUnusedTranslateList(): Promise<TranslateRestourant[]> {
     return await this.restourantTranslateModel
       .find({ status: 'inactive' })
-      .select(["-updatedAt", "-createdAt"])
-      .populate('definitions', ["value", "id", 'restourant_id'])
+      .select(['-updatedAt', '-createdAt'])
+      .populate('definitions', ['value', 'id', 'restourant_id'])
       .exec();
   }
 
-  async createTranslate(payload: CreateRestourantTranslateInterface): Promise<string> {
-    await this.#_checkRestourant(payload.restourant_id)
-    await this.#_checkExistingRestourantTranslate(payload.code, payload.restourant_id);
+  async createTranslate(
+    payload: CreateRestourantTranslateInterface,
+  ): Promise<string> {
+    await this.#_checkRestourant(payload.restourant_id);
+    await this.#_checkExistingRestourantTranslate(
+      payload.code,
+      payload.restourant_id,
+    );
 
     for (const code of Object.keys(payload.definition)) {
       await this.#_checkRestourantLanguage(code, payload.restourant_id);
@@ -66,7 +81,10 @@ export class RestourantTranslateService {
     });
 
     for (const item of Object.entries(payload.definition)) {
-      const restourant_language = await this.restourantLanguageModel.findOne({ code: item[0], restourant_id: payload.restourant_id });
+      const restourant_language = await this.restourantLanguageModel.findOne({
+        code: item[0],
+        restourant_id: payload.restourant_id,
+      });
 
       const newDefinition = await this.restourantDefinitionModel.create({
         languageId: restourant_language.id,
@@ -74,56 +92,70 @@ export class RestourantTranslateService {
         restaurant_id: payload.restourant_id,
         value: item[1],
       });
-      restourant_translate.definitions.push(newDefinition.id);      
-      
+      restourant_translate.definitions.push(newDefinition.id);
+
       await newDefinition.save();
     }
     await restourant_translate.save();
-    return restourant_translate._id.toString()
+    return restourant_translate._id.toString();
   }
 
   async getSingleRestourantTranslateByCode(
     payload: GetSingleRestourantTranslateByCodeRequest,
   ): Promise<GetSingleRestourantTranslateByCodeResponse> {
-    await this.#_checkRestourantLanguage(payload.languageCode, payload.restourant_id);
-    await this.#_checkRestourantTranslateByCode(payload.translateCode, payload.restourant_id);
+    await this.#_checkRestourantLanguage(
+      payload.languageCode,
+      payload.restourant_id,
+    );
+    await this.#_checkRestourantTranslateByCode(
+      payload.translateCode,
+      payload.restourant_id,
+    );
 
     const restourant_language = await this.restourantLanguageModel.findOne({
       code: payload.languageCode,
-      restourant_id: payload.restourant_id
+      restourant_id: payload.restourant_id,
     });
-    
-    const restourant_translate = await this.restourantTranslateModel.findOne({code:payload.translateCode, restourant_id: payload.restourant_id});
-    
+
+    const restourant_translate = await this.restourantTranslateModel.findOne({
+      code: payload.translateCode,
+      restourant_id: payload.restourant_id,
+    });
+
     const definition = await this.restourantDefinitionModel.findOne({
       languageId: restourant_language.id,
       translateId: restourant_translate.id,
-      restaurant_id: payload.restourant_id
-    });    
+      restaurant_id: payload.restourant_id,
+    });
     return {
       code: restourant_translate.code,
       value: definition?.value,
-      restourant_id: payload.restourant_id
+      restourant_id: payload.restourant_id,
     };
   }
-  
+
   async getSingleRestourantTranslate(
     payload: GetSingleRestourantTranslateRequest,
-    ): Promise<GetSingleRestourantTranslateResponse> {
+  ): Promise<GetSingleRestourantTranslateResponse> {
     // await this.#_checkRestourantTranslate(payload.translateId);
-    await this.#_checkRestourantLanguage(payload.languageCode, payload.restourant_id)
-      
+    await this.#_checkRestourantLanguage(
+      payload.languageCode,
+      payload.restourant_id,
+    );
+
     const restourant_language = await this.restourantLanguageModel.findOne({
       code: payload.languageCode,
-      restourant_id: payload.restourant_id
+      restourant_id: payload.restourant_id,
     });
 
-    const restourant_translate = await this.restourantTranslateModel.findById(payload.translateId);
+    const restourant_translate = await this.restourantTranslateModel.findById(
+      payload.translateId,
+    );
 
-    if(!restourant_translate) return {
-      value: "Translate not found"
-    }
-        
+    if (!restourant_translate)
+      return {
+        value: 'Translate not found',
+      };
 
     const restourant_definition = await this.restourantDefinitionModel.findOne({
       languageId: restourant_language.id,
@@ -135,18 +167,27 @@ export class RestourantTranslateService {
     };
   }
 
-  async updateRestourantTranslate(payload: UpdateRestourantTranslateRequest): Promise<string> {
+  async updateRestourantTranslate(
+    payload: UpdateRestourantTranslateRequest,
+  ): Promise<string> {
     await this.#_checkRestourantTranslate(payload.id);
-    const foundedRestourantTranslate = await this.restourantTranslateModel.findById(payload.id);
+    const foundedRestourantTranslate =
+      await this.restourantTranslateModel.findById(payload.id);
 
     if (payload?.status) {
-      if (payload.status == 'active' && foundedRestourantTranslate.status == 'active') {
+      if (
+        payload.status == 'active' &&
+        foundedRestourantTranslate.status == 'active'
+      ) {
         throw new ConflictException('Translate is already in use');
       }
 
-      await this.restourantTranslateModel.findByIdAndUpdate(foundedRestourantTranslate.id, {
-        status: payload.status,
-      });
+      await this.restourantTranslateModel.findByIdAndUpdate(
+        foundedRestourantTranslate.id,
+        {
+          status: payload.status,
+        },
+      );
     }
 
     if (payload?.definition) {
@@ -159,27 +200,36 @@ export class RestourantTranslateService {
       });
 
       for (const item of Object.entries(payload.definition)) {
-        const restourant_language = await this.restourantLanguageModel.findOne({ code: item[0] });
-                
-
-        const newRestourantDefinition = await this.restourantDefinitionModel.create({
-          languageId: restourant_language.id,
-          translateId: foundedRestourantTranslate.id,
-          value: item[1],
+        const restourant_language = await this.restourantLanguageModel.findOne({
+          code: item[0],
         });
 
-        await this.restourantTranslateModel.findByIdAndUpdate(foundedRestourantTranslate.id, {
-          $push: { definitions: newRestourantDefinition.id },
-        });
+        const newRestourantDefinition =
+          await this.restourantDefinitionModel.create({
+            languageId: restourant_language.id,
+            translateId: foundedRestourantTranslate.id,
+            value: item[1],
+          });
+
+        await this.restourantTranslateModel.findByIdAndUpdate(
+          foundedRestourantTranslate.id,
+          {
+            $push: { definitions: newRestourantDefinition.id },
+          },
+        );
         newRestourantDefinition.save();
-        return newRestourantDefinition.id
+        return newRestourantDefinition.id;
       }
     }
   }
 
-  async updateRestourantDefinition(payload: RestourantDefinitionUpdateRequest): Promise<void> {
+  async updateRestourantDefinition(
+    payload: RestourantDefinitionUpdateRequest,
+  ): Promise<void> {
     await this.#_checkID(payload.id);
-    const restourant_definition = await this.restourantDefinitionModel.findById(payload.id);
+    const restourant_definition = await this.restourantDefinitionModel.findById(
+      payload.id,
+    );
 
     if (!restourant_definition) {
       throw new NotFoundException('RestourantDefinition not found');
@@ -193,52 +243,76 @@ export class RestourantTranslateService {
   async deleteRestourantTranslate(id: string) {
     await this.#_checkID(id);
 
-    const restourant_translate = await this.restourantTranslateModel.findById(id);
+    const restourant_translate = await this.restourantTranslateModel.findById(
+      id,
+    );
 
-    await this.restourantDefinitionModel.deleteMany({ translateId: restourant_translate.id });
+    await this.restourantDefinitionModel.deleteMany({
+      translateId: restourant_translate.id,
+    });
 
     await this.restourantTranslateModel.findByIdAndDelete(id);
   }
 
-  async #_checkRestourantLanguage(code: string, restourant_id: string): Promise<void> {
-    const restourant_language = await this.restourantLanguageModel.findOne({ code: code, restourant_id: restourant_id });
+  async #_checkRestourantLanguage(
+    code: string,
+    restourant_id: string,
+  ): Promise<void> {
+    const restourant_language = await this.restourantLanguageModel.findOne({
+      code: code,
+      restourant_id: restourant_id,
+    });
 
-    if (!restourant_language){
-      throw new BadRequestException("Language Not Found")
+    if (!restourant_language) {
+      throw new BadRequestException('Language Not Found');
     }
   }
 
   async #_checkRestourantTranslate(id: string): Promise<void> {
     await this.#_checkID(id);
-    
-    const restourant_translate = await this.restourantTranslateModel.findById(id);
-    
-    if(!restourant_translate){
-        throw new NotFoundException("Translate Not Found")
+
+    const restourant_translate = await this.restourantTranslateModel.findById(
+      id,
+    );
+
+    if (!restourant_translate) {
+      throw new NotFoundException('Translate Not Found');
     }
   }
 
   async #_checkRestourant(id: string): Promise<void> {
     await this.#_checkID(id);
     const restourant = await this.restourantModel.findById(id);
-    
+
     if (!restourant) throw new NotFoundException('Restourant not found');
   }
 
-  async #_checkRestourantTranslateByCode(code: string, restourant_id: string): Promise<void> {
-    const restourant_translate = await this.restourantTranslateModel.findOne({code:code, restaurant_id: restourant_id});
-  
-    if (!restourant_translate) throw new NotFoundException('Translate Code not found');
-  }
-
-  async #_checkExistingRestourantTranslate(code: string, restourant_id: string): Promise<void> {
+  async #_checkRestourantTranslateByCode(
+    code: string,
+    restourant_id: string,
+  ): Promise<void> {
     const restourant_translate = await this.restourantTranslateModel.findOne({
       code: code,
-      restourant_id: restourant_id
+      restaurant_id: restourant_id,
+    });
+
+    if (!restourant_translate)
+      throw new NotFoundException('Translate Code not found');
+  }
+
+  async #_checkExistingRestourantTranslate(
+    code: string,
+    restourant_id: string,
+  ): Promise<void> {
+    const restourant_translate = await this.restourantTranslateModel.findOne({
+      code: code,
+      restourant_id: restourant_id,
     });
 
     if (restourant_translate)
-      throw new BadRequestException(`RestourantTranslate ${code} is already available`);
+      throw new BadRequestException(
+        `RestourantTranslate ${code} is already available`,
+      );
   }
 
   async #_checkID(id: string): Promise<void> {

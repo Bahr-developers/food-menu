@@ -15,7 +15,7 @@ export class LanguageRestourant {
   @Prop({ type: String, required: false })
   image_url: string;
 
-  @Prop({type: [Types.ObjectId], ref: "Restourant", required: true })
+  @Prop({type: Types.ObjectId, ref: "Restourant", required: true })
   restourant_id: Restourant
 }
 

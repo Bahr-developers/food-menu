@@ -23,8 +23,8 @@ export class TranslateRestourant {
   @Prop({type: [Types.ObjectId], ref: "DefinitionRestourant", required: true })
   definitions: DefinitionRestourant[]
 
-  @Prop({type: [Types.ObjectId], ref: "Restourant", required: true })
-  restaurant_id: Restourant[]
+  @Prop({type: Types.ObjectId, ref: "Restourant", required: true })
+  restaurant_id: Restourant
 }
 
 export const TranslateRestourantSchema = SchemaFactory.createForClass(TranslateRestourant);

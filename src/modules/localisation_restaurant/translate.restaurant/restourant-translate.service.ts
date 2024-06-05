@@ -18,26 +18,18 @@ import {
   UpdateRestourantTranslateRequest,
 } from './interfaces';
 import { Restourant } from '../../restourant/schemas';
-import { Language } from '../../localisation/language';
-import { Definition, Translate } from '../../localisation/translate';
 
 @Injectable()
 export class RestourantTranslateService {
   constructor(
-    @InjectModel(TranslateRestourant.name)
-    private readonly restourantTranslateModel: Model<TranslateRestourant>,
-    @InjectModel(Translate.name)
-    private readonly translateModel: Model<Translate>,
     @InjectModel(Restourant.name)
     private readonly restourantModel: Model<Restourant>,
+    @InjectModel(TranslateRestourant.name)
+    private readonly restourantTranslateModel: Model<TranslateRestourant>,
     @InjectModel(DefinitionRestourant.name)
     private readonly restourantDefinitionModel: Model<DefinitionRestourant>,
-    @InjectModel(Definition.name)
-    private readonly definitionModel: Model<Definition>,
     @InjectModel(LanguageRestourant.name)
     private readonly restourantLanguageModel: Model<LanguageRestourant>,
-    @InjectModel(Language.name)
-    private readonly languageModel: Model<Language>,
   ) {}
 
   async getRestourantTranslateList(
@@ -52,9 +44,9 @@ export class RestourantTranslateService {
     return data;
   }
 
-  async getUnusedTranslateList(): Promise<TranslateRestourant[]> {
+  async getUnusedTranslateList(restaurant_id: string): Promise<TranslateRestourant[]> {
     return await this.restourantTranslateModel
-      .find({ status: 'inactive' })
+      .find({ status: 'inactive', restaurant_id: restaurant_id})
       .select(['-updatedAt', '-createdAt'])
       .populate('definitions', ['value', 'id', 'restourant_id'])
       .exec();
@@ -92,6 +84,7 @@ export class RestourantTranslateService {
         restaurant_id: payload.restourant_id,
         value: item[1],
       });
+      restourant_translate.definitions.push(newDefinition.id);
       restourant_translate.definitions.push(newDefinition.id);
 
       await newDefinition.save();
@@ -169,7 +162,8 @@ export class RestourantTranslateService {
 
   async updateRestourantTranslate(
     payload: UpdateRestourantTranslateRequest,
-  ): Promise<string> {
+  ): Promise<void> {
+    
     await this.#_checkRestourantTranslate(payload.id);
     const foundedRestourantTranslate =
       await this.restourantTranslateModel.findById(payload.id);
@@ -198,8 +192,9 @@ export class RestourantTranslateService {
       await this.restourantTranslateModel.findByIdAndUpdate(payload.id, {
         definitions: [],
       });
-
+      
       for (const item of Object.entries(payload.definition)) {
+        
         const restourant_language = await this.restourantLanguageModel.findOne({
           code: item[0],
         });
@@ -211,6 +206,14 @@ export class RestourantTranslateService {
             value: item[1],
           });
 
+        await this.restourantLanguageModel.findByIdAndUpdate(
+          restourant_language.id,
+          {
+            $push: { definitions: newRestourantDefinition.id },
+          },
+        );
+        console.log(restourant_language.id);
+        
         await this.restourantTranslateModel.findByIdAndUpdate(
           foundedRestourantTranslate.id,
           {
@@ -218,7 +221,6 @@ export class RestourantTranslateService {
           },
         );
         newRestourantDefinition.save();
-        return newRestourantDefinition.id;
       }
     }
   }
@@ -246,12 +248,25 @@ export class RestourantTranslateService {
     const restourant_translate = await this.restourantTranslateModel.findById(
       id,
     );
+    const definitions = await this.restourantDefinitionModel.findOne({translateId: restourant_translate.id})
+    const languageId = definitions.languageId
 
-    await this.restourantDefinitionModel.deleteMany({
-      translateId: restourant_translate.id,
-    });
+    const language = await this.restourantLanguageModel.findOne({_id: languageId})
 
-    await this.restourantTranslateModel.findByIdAndDelete(id);
+    if(!language){
+      await this.restourantDefinitionModel.deleteMany({
+        translateId: restourant_translate.id,
+      });
+  
+      await this.restourantTranslateModel.deleteMany({id});
+    }
+    else{
+      await this.restourantDefinitionModel.deleteMany({
+        translateId: restourant_translate.id,
+      });
+  
+      await this.restourantTranslateModel.findByIdAndDelete(id);
+    }
   }
 
   async #_checkRestourantLanguage(

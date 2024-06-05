@@ -9,7 +9,7 @@ const translateType = ['content', 'error'];
 
 export type TranslateRestourantDocument = HydratedDocument<TranslateRestourant>;
 
-@Schema({ collection: 'translate_restourant', timestamps: true })
+@Schema({ collection: 'translate_restaurant', timestamps: true })
 export class TranslateRestourant {
   @Prop({ unique: true })
   code: string;

@@ -44,9 +44,9 @@ export class RestourantTranslateController {
       });
   }
 
-  @Get('/unused')
-  async getUnusedTranslateList(): Promise<TranslateRestourant[]> {
-    return await this.#_service.getUnusedTranslateList();
+  @Get('/unused/:id')
+  async getUnusedTranslateList(@Param('restaurant_id') restaurant_id: string): Promise<TranslateRestourant[]> {
+    return await this.#_service.getUnusedTranslateList(restaurant_id);
   }
 
   @Get('single/:id')
@@ -71,8 +71,8 @@ export class RestourantTranslateController {
   async updateRestourantTranslate(
     @Param('id') translateId: string,
     @Body() payload: UpdateRestourantTranslateDto,
-  ): Promise<String> {
-    return await this.#_service.updateRestourantTranslate({ ...payload, id: translateId });
+  ): Promise<void> {
+   await this.#_service.updateRestourantTranslate({ ...payload, id: translateId });
   }
 
   @Patch('edit/definition/:id')

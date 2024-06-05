@@ -6,7 +6,7 @@ import { TranslateRestourant, TranslateRestourantSchema } from './translate.sche
 
 export type DefinitionRestourantDocument = HydratedDocument<DefinitionRestourant>;
 
-@Schema({ collection: 'definition_restourant', timestamps: true, })
+@Schema({ collection: 'definition_restaurant', timestamps: true, })
 export class DefinitionRestourant {
   @Prop()
   value: string;
@@ -17,7 +17,6 @@ export class DefinitionRestourant {
   @Prop({ type: SchemaTypes.ObjectId, ref: LanguageRestourant.name })
   languageId: Types.ObjectId;
 
-  
   @Prop({type: [Types.ObjectId], ref: "Restourant", required: true })
   restaurant_id: Restourant[]
 }

@@ -1,10 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { Restourant } from '../../../restourant/schemas';
+import { DefinitionRestourant } from '../../translate.restaurant';
 
-export type LanguageRestourantDocument = HydratedDocument<LanguageRestourant>;
-
-@Schema({ collection: 'language_restourant', timestamps: true })
+@Schema({ collection: 'language_restaurant', timestamps: true })
 export class LanguageRestourant {
   @Prop({ length: 2 })
   code: string;

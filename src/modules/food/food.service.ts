@@ -29,14 +29,11 @@ import { DefinitionRestourant, RestourantTranslateService } from '../localisatio
 export class FoodService {
   constructor(
     @InjectModel(Food.name) private readonly foodModel: Model<Food>,
-    @InjectModel(TranslateRestourant.name)
-    private readonly translateRestourantModel: Model<TranslateRestourant>,
     @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
     @InjectModel(LanguageRestourant.name) private readonly languageRestourantModel: Model<LanguageRestourant>,
-    @InjectModel(Restourant.name)
-    private readonly restourantModel: Model<Restourant>,
-    @InjectModel(DefinitionRestourant.name)
-    private readonly definitionRestourantModel: Model<DefinitionRestourant>,
+    @InjectModel(TranslateRestourant.name) private readonly translateRestourantModel: Model<TranslateRestourant>,
+    @InjectModel(DefinitionRestourant.name) private readonly definitionRestourantModel: Model<DefinitionRestourant>,
+    @InjectModel(Restourant.name) private readonly restourantModel: Model<Restourant>,
     private minioService: MinioService,
     private readonly service: RestourantTranslateService,
   ) {}

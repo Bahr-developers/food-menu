@@ -51,7 +51,7 @@ export class TranslateController {
       });
   }
 
-  @Get('/unused')
+  @Get('/unused/:id')
   async getUnusedTranslateList(): Promise<Translate[]> {
     return await this.#_service.getUnusedTranslateList();
   }

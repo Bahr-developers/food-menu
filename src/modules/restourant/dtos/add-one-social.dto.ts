@@ -10,6 +10,7 @@ export class AddOneSocialDto implements AddOneSocialInterface {
   restaurant_id: string;
 
   @ApiProperty({
+    example:{'link':'@bahr-tech', 'social_id':'66460d474ee532dca4771cf2'},
     type: 'object',
     required: false
   })

@@ -97,7 +97,9 @@ export class TranslateService {
     payload: GetSingleTranslateRequest,
   ): Promise<GetSingleTranslateResponse> {
     await this.#_checkLanguage(payload.languageCode);
-    await this.#_checkTranslate(payload.translateId);
+    if(await this.#_checkTranslate(payload.translateId)==false){
+      return {value:'Translate Not Found'}
+    }
 
     const language = await this.languageModel.findOne({
       code: payload.languageCode,
@@ -116,7 +118,9 @@ export class TranslateService {
   }
 
   async updateTranslate(payload: UpdateTranslateRequest): Promise<string> {
-    await this.#_checkTranslate(payload.id);
+    if(await this.#_checkTranslate(payload.id)==false){
+      return "Translate not found"
+    }
     const foundedTranslate = await this.translateModel.findById(payload.id);
 
     if (payload?.status) {
@@ -186,12 +190,12 @@ export class TranslateService {
     if (!language) throw new ConflictException(`Language ${code} not found`);
   }
 
-  async #_checkTranslate(id: string): Promise<void> {
+  async #_checkTranslate(id: string): Promise<boolean> {
     await this.#_checkID(id);
     const translate = await this.translateModel.findById(id);
     
 
-    if (!translate) throw new NotFoundException('Translate not found');
+    if (!translate) return false;
   }
 
   async #_checkTranslateByCode(code: string): Promise<void> {

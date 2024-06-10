@@ -58,7 +58,70 @@ export class RestourantService {
     );
   }
 
+  async getOneRestourant(id: string, languageCode: string): Promise<Restourant> {    
+    const restourant = await this.restourantModel
+    .findById(id)
+    .select('name description location image_url tel service_percent socials')
+    .exec();
+    
+    let data = []
+    data.push(restourant)     
+
+    let result = [];
+    let forsocial = []
+    let socials = []
+    let value = ''
+    let social_item = {}
+    for (let x of data) {
+      let social = []
+      const name_request = {
+        translateId: x.name.toString(),
+        languageCode: languageCode,
+        restourant_id: x.id
+      };
+
+      if(x.description?.length){
+        const description_request = {
+          translateId: x.description.toString(),
+          languageCode: languageCode,
+          restourant_id: x.id
+        };
+        
+        const translated_description = await this.service.getSingleTranslate(
+          description_request,
+        )
+        value = translated_description.value
+        }
+        
+      const translated_name = await this.service.getSingleTranslate(
+        name_request,
+      );
+
+      if(x.socials.length){
+        for(const item of x.socials){
+            socials.push({link:item.link, socials:await this.socialModel.findOne({_id: item.social_id})})          
+          }
+      }else{
+        socials = []
+      }
+        
+        result.push({
+          id: x._id,
+          name: translated_name.value,
+          description: value,
+          image_url: x.image_url,
+          location: x.location,
+          tel: x.tel,
+          percent: x.service_percent,
+          socials: socials    
+        })
+    }        
+    return result[0];
+  }
+
   async getRestourantList(languageCode: string): Promise<Restourant[]> {
+      console.log(languageCode);
+      
     const data = await this.restourantModel
       .find()
       .select('name description location image_url tel service_percent socials')
@@ -112,7 +175,7 @@ export class RestourantService {
           percent: x.service_percent,
           socials: socials    
         })
-    }        
+    }      
     return result;
   }
 
@@ -206,7 +269,6 @@ export class RestourantService {
     }
   }
 
-  
   async addOneSocial(payload: AddOneSocialInterface): Promise<void> {
     await this.#_checkRestaurant(payload.restaurant_id);
     await this.#_checkSocial(payload.social.social_id)

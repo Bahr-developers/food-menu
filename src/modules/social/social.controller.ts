@@ -35,7 +35,7 @@ import { AddOneSocialInterface } from './interfaces';
       return await this.#_socialService.getSocialList();
     }
   
-    @Get('find/:categoryId')
+    @Get('find/:socialId')
     async getSocialById(
         @Param('socialId') socialId: string
     ): Promise<Social[]> {

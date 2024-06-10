@@ -72,7 +72,7 @@ export class SocialService {
       await this.socialModel.findByIdAndUpdate(
         { _id: payload.id },
         {
-          image_url: file.fileName,
+          image: file.fileName,
         },
       );
     }

@@ -40,6 +40,7 @@ export class RestourantTranslateService {
       .select(['-updatedAt', '-createdAt'])
       .populate({ path: 'definitions', populate: { path: 'languageId' } })
       .exec();
+      
 
     return data;
   }
@@ -48,7 +49,7 @@ export class RestourantTranslateService {
     return await this.restourantTranslateModel
       .find({ status: 'inactive', restaurant_id: restaurant_id})
       .select(['-updatedAt', '-createdAt'])
-      .populate('definitions', ['value', 'id', 'restourant_id'])
+      .populate('definitions')
       .exec();
   }
 
@@ -84,7 +85,6 @@ export class RestourantTranslateService {
         restaurant_id: payload.restourant_id,
         value: item[1],
       });
-      restourant_translate.definitions.push(newDefinition.id);
       restourant_translate.definitions.push(newDefinition.id);
 
       await newDefinition.save();
@@ -147,7 +147,7 @@ export class RestourantTranslateService {
 
     if (!restourant_translate)
       return {
-        value: 'Translate not found',
+        value: '',
       };
 
     const restourant_definition = await this.restourantDefinitionModel.findOne({
@@ -155,8 +155,9 @@ export class RestourantTranslateService {
       translateId: restourant_translate.id,
     });
 
+    
     return {
-      value: restourant_definition?.value,
+      value: restourant_definition.value,
     };
   }
 

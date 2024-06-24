@@ -44,7 +44,7 @@ export class RestourantTranslateController {
       });
   }
 
-  @Get('/unused/:id')
+  @Get('/unused/:restaurant_id')
   async getUnusedTranslateList(@Param('restaurant_id') restaurant_id: string): Promise<TranslateRestourant[]> {
     return await this.#_service.getUnusedTranslateList(restaurant_id);
   }

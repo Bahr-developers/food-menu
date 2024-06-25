@@ -199,7 +199,7 @@ export class CategoryService {
   async getCategoryList(languageCode: string, restaurant_id:string): Promise<Category[]> {
     const data = await this.categoryModel
       .find({restaurant_id: restaurant_id})
-      .select('name image_url category_id, food_status, restaurant_id')
+      .select('name image_url category_id food_status restaurant_id')
       .populate({
         path: 'subcategories',
         populate: {
@@ -211,6 +211,8 @@ export class CategoryService {
     let result = [];
 
     for (let x of data) {
+      console.log(x);
+      
       let foods = null;
       let foodss = null;
       let subcategories = [];

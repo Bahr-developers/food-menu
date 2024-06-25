@@ -124,7 +124,7 @@ export class CategoryService {
   async getCategoryById(payload:GetSingleCategory): Promise<Category[]> {
     const data = await this.categoryModel
       .find({_id:payload.categoryId, restaurant_id:payload.restaurant_id})
-      .select('name image_url category_id, food_status, restourant_id')
+      .select('name image_url category_id food_status restourant_id')
       .populate({
         path: 'subcategories',
         populate: {
@@ -282,7 +282,7 @@ export class CategoryService {
 
     const data = await this.categoryModel
       .find({ restaurant_id: restaurantId})
-      .select('name image_url category_id, restourant_id')
+      .select('name image_url category_id restourant_id')
       .populate({
         path: 'subcategories',
         populate: {

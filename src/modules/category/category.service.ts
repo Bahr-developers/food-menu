@@ -211,7 +211,7 @@ export class CategoryService {
     let result = [];
 
     for (let x of data) {
-      console.log(x);
+      
       
       let foods = null;
       let foodss = null;
@@ -238,7 +238,7 @@ export class CategoryService {
             languageCode: languageCode,
             restourant_id: x?.restaurant_id?.toString()
           })
-        ).value;
+        ).value;        
         for (let fod of item.foods) {
           foods = null;
           foods = fod;
@@ -261,7 +261,8 @@ export class CategoryService {
         }
         
         subcategories.push(foodss);
-      }
+
+      }      
       category.subcategories = subcategories;
 
       if (x.category_id) {

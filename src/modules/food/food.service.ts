@@ -41,6 +41,7 @@ export class FoodService {
   async createFood(payload: CreateFoodInterface): Promise<void> {
     await this.#_checkCategory(payload.category_id);
     await this.#_checkRestourant(payload.restourant_id);
+    console.log(payload);
     let translate_name = ""
     let descriptionn = ''
     let preparing_time: any = {}
@@ -99,8 +100,8 @@ export class FoodService {
       category_id: payload.category_id,
       restourant_id: payload.restourant_id,
       image_urls: files,
-    });
-        
+    });    
+
     await this.categoryModel.findByIdAndUpdate(payload.category_id, {
       $push: { foods: newFood.id },
     });
@@ -189,6 +190,7 @@ export class FoodService {
         restourant_id: x.restourant_id,
         food_status: x.food_status,
       });
+      
     }
     return result;
   }

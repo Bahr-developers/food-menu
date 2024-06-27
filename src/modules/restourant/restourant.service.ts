@@ -120,7 +120,6 @@ export class RestourantService {
   }
 
   async getRestourantList(languageCode: string): Promise<Restourant[]> {
-      console.log(languageCode);
       
     const data = await this.restourantModel
       .find()

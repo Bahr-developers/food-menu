@@ -30,19 +30,26 @@ export class CategoryController {
 
   @Get('find/all/:restourant_id')
   async getCategoryList(
-    @Param("restourant_id") restourant_id: string,
+    @Param('restourant_id') restourant_id: string,
     @Headers('accept-language') languageCode: string,
   ): Promise<Category[]> {
-    return await this.#_categoryService.getCategoryList(languageCode, restourant_id);
+    return await this.#_categoryService.getCategoryList(
+      languageCode,
+      restourant_id,
+    );
   }
 
   @Get('find/:categoryId')
   async getCategoryById(
     @Headers('accept-language') languageCode: string,
-    @Param('categoryId') categoryId:string,
-    @Body('restaurant_id') restaurant_id:string
+    @Param('categoryId') categoryId: string,
+    @Body('restaurant_id') restaurant_id: string,
   ): Promise<Category[]> {
-    return await this.#_categoryService.getCategoryById({languageCode, categoryId, restaurant_id});
+    return await this.#_categoryService.getCategoryById({
+      languageCode,
+      categoryId,
+      restaurant_id,
+    });
   }
 
   @Get('find/by/restaurant/:restaurantId')
@@ -84,7 +91,10 @@ export class CategoryController {
     @Body() payload: CreateCategoryDto,
     @UploadedFile() image: any,
   ): Promise<void> {
-    return this.#_categoryService.createCategoryforRestourantLanguages({ ...payload, image });
+    return this.#_categoryService.createCategoryforRestourantLanguages({
+      ...payload,
+      image,
+    });
   }
 
   @ApiConsumes('multipart/form-data')

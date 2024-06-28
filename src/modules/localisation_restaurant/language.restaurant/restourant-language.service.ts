@@ -1,8 +1,9 @@
-import { CreateRestourantLanguageRequest, UpdateRestourantLanguageRequest } from './interfaces';
+import {
+  CreateRestourantLanguageRequest,
+  UpdateRestourantLanguageRequest,
+} from './interfaces';
 import {
   ConflictException,
-  forwardRef,
-  Inject,
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -15,11 +16,14 @@ import { RestourantTranslateService } from '../translate.restaurant/restourant-t
 @Injectable()
 export class RestourantLanguageService {
   constructor(
-    @InjectModel(LanguageRestourant.name) private readonly restaurantLanguageModel: Model<LanguageRestourant>,
+    @InjectModel(LanguageRestourant.name)
+    private readonly restaurantLanguageModel: Model<LanguageRestourant>,
     private minioService: MinioService,
   ) {}
 
-  async createLanguage(payload: CreateRestourantLanguageRequest): Promise<void> {
+  async createLanguage(
+    payload: CreateRestourantLanguageRequest,
+  ): Promise<void> {
     await this.#_checkExistingLanguage(payload.code, payload.restourant_id);
 
     const file = await this.minioService.uploadFile({
@@ -31,7 +35,7 @@ export class RestourantLanguageService {
       code: payload.code,
       title: payload.title,
       image_url: file.fileName,
-      restourant_id: payload.restourant_id
+      restourant_id: payload.restourant_id,
     });
 
     newLanguage.save();
@@ -39,17 +43,18 @@ export class RestourantLanguageService {
 
   async getLanguageList(restaurantId: string): Promise<LanguageRestourant[]> {
     const data = await this.restaurantLanguageModel
-    .find({restourant_id: restaurantId})
-    .select('title id code image_url restourant_id')
-    .exec();
-    
-    
-    return data
+      .find({ restourant_id: restaurantId })
+      .select('title id code image_url restourant_id')
+      .exec();
+
+    return data;
   }
 
-  async updateLanguage(payload: UpdateRestourantLanguageRequest): Promise<void> {
+  async updateLanguage(
+    payload: UpdateRestourantLanguageRequest,
+  ): Promise<void> {
     await this.#_checkRestourantLanguage(payload.id);
-    if(payload.title){
+    if (payload.title) {
       await this.restaurantLanguageModel.findByIdAndUpdate(
         {
           _id: payload.id,
@@ -60,9 +65,13 @@ export class RestourantLanguageService {
       );
     }
 
-    if(payload.image){
-      const deleteImageFile = await this.restaurantLanguageModel.findById(payload.id);
-      await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
+    if (payload.image) {
+      const deleteImageFile = await this.restaurantLanguageModel.findById(
+        payload.id,
+      );
+      await this.minioService
+        .removeFile({ fileName: deleteImageFile.image_url })
+        .catch((undefined) => undefined);
       const file = await this.minioService.uploadFile({
         file: payload.image,
         bucket: 'food-menu',
@@ -79,21 +88,26 @@ export class RestourantLanguageService {
   async deleteLanguage(id: string): Promise<void> {
     await this.#_checkRestourantLanguage(id);
     const data = await this.restaurantLanguageModel
-    .findById({_id: id})
-    .select('id')
-    .exec();    
-    
+      .findById({ _id: id })
+      .select('id')
+      .exec();
+
     await this.restaurantLanguageModel.findByIdAndDelete({ _id: id });
   }
 
-  async #_checkExistingLanguage(code: string, restourant_id: string): Promise<void> {
+  async #_checkExistingLanguage(
+    code: string,
+    restourant_id: string,
+  ): Promise<void> {
     const language_restourant = await this.restaurantLanguageModel.findOne({
       code: code,
-      restourant_id: restourant_id
+      restourant_id: restourant_id,
     });
 
     if (language_restourant) {
-      throw new ConflictException(`${language_restourant.title} is already available`);
+      throw new ConflictException(
+        `${language_restourant.title} is already available`,
+      );
     }
   }
 

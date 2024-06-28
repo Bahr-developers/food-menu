@@ -14,7 +14,7 @@ export class LanguageService {
   constructor(
     @InjectModel(Language.name) private readonly languageModel: Model<Language>,
     private minioService: MinioService,
-  ){}
+  ) {}
 
   async createLanguage(payload: CreateLanguageRequest): Promise<void> {
     await this.#_checkExistingLanguage(payload.code);
@@ -25,7 +25,7 @@ export class LanguageService {
     const newLanguage = await this.languageModel.create({
       code: payload.code,
       title: payload.title,
-      image_url: file.fileName
+      image_url: file.fileName,
     });
 
     newLanguage.save();
@@ -41,7 +41,7 @@ export class LanguageService {
   async updateLanguage(payload: UpdateLanguageRequest): Promise<void> {
     await this.#_checkLanguage(payload.id);
 
-    if(payload.title){
+    if (payload.title) {
       await this.languageModel.findByIdAndUpdate(
         {
           _id: payload.id,
@@ -52,9 +52,11 @@ export class LanguageService {
       );
     }
 
-    if(payload.image){
+    if (payload.image) {
       const deleteImageFile = await this.languageModel.findById(payload.id);
-      await this.minioService.removeFile({ fileName: deleteImageFile.image_url }).catch(undefined => undefined);
+      await this.minioService
+        .removeFile({ fileName: deleteImageFile.image_url })
+        .catch((undefined) => undefined);
       const file = await this.minioService.uploadFile({
         file: payload.image,
         bucket: 'food-menu',

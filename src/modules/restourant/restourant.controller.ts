@@ -11,7 +11,12 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { AddOneSocialDto, CreateRestourantDto, DeleteOneSocialDto, UpdateRestourantDto } from './dtos';
+import {
+  AddOneSocialDto,
+  CreateRestourantDto,
+  DeleteOneSocialDto,
+  UpdateRestourantDto,
+} from './dtos';
 import { Restourant } from './schemas';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RestourantService } from './restourant.service';
@@ -32,15 +37,18 @@ export class RestourantController {
   async getRestourantList(
     @Headers('accept-language') languageCode: string,
   ): Promise<Restourant[]> {
-    return  await this.#_restourantService.getRestourantList(languageCode);
+    return await this.#_restourantService.getRestourantList(languageCode);
   }
-  
+
   @Get('find/one/:id')
   async getOneRestourant(
     @Param('id') restourantId: string,
     @Headers('accept-language') languageCode: string,
   ): Promise<Restourant> {
-    return await this.#_restourantService.getOneRestourant(restourantId, languageCode);
+    return await this.#_restourantService.getOneRestourant(
+      restourantId,
+      languageCode,
+    );
   }
 
   @ApiConsumes('multipart/form-data')
@@ -49,14 +57,12 @@ export class RestourantController {
   createRestourant(
     @Body() payload: CreateRestourantDto,
     @UploadedFile() image: any,
-    ): Promise<void> {
-      return this.#_restourantService.createRestourant({ ...payload, image });
-    }
+  ): Promise<void> {
+    return this.#_restourantService.createRestourant({ ...payload, image });
+  }
 
   @Post('add/one/social')
-  async addOneSocial(
-    @Body() payload: AddOneSocialDto,
-  ) {
+  async addOneSocial(@Body() payload: AddOneSocialDto) {
     await this.#_restourantService.addOneSocial({ ...payload });
   }
 

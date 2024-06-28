@@ -31,7 +31,7 @@ import { RestourantTranslateModule } from './modules/localisation_restaurant/tra
     AuthModule,
     SocialModule,
     RestourantLanguageModule,
-    RestourantTranslateModule
+    RestourantTranslateModule,
   ],
 })
 export class AppModule {}

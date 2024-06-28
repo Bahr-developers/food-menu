@@ -76,7 +76,7 @@ export class RestourantTranslateService {
 
     for (const item of Object.entries(payload.definition)) {
       const restourant_language = await this.restourantLanguageModel.findOne({
-        code: item[0],
+        code: item,
         restourant_id: payload.restourant_id,
       });
 

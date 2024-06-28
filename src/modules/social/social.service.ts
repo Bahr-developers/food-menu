@@ -8,63 +8,67 @@ import { Model, isValidObjectId } from 'mongoose';
 import { MinioService } from '../../client';
 import { Restourant } from 'modules/restourant/schemas';
 import { Social } from './schemas';
-import { AddOneSocialInterface, CreateSocialInterface, UpdateSocialInterface } from './interfaces';
+import {
+  AddOneSocialInterface,
+  CreateSocialInterface,
+  UpdateSocialInterface,
+} from './interfaces';
 @Injectable()
 export class SocialService {
   constructor(
     @InjectModel(Social.name) private readonly socialModel: Model<Social>,
-    @InjectModel(Restourant.name) private readonly restaurantModel: Model<Restourant>,
+    @InjectModel(Restourant.name)
+    private readonly restaurantModel: Model<Restourant>,
     private minioService: MinioService,
   ) {}
 
   async createSocial(payload: CreateSocialInterface): Promise<void> {
-    await this.#_checkExistingSocial(payload.name)
-    
-    let image = ''
+    await this.#_checkExistingSocial(payload.name);
 
-    if(payload.image){
+    let image = '';
+
+    if (payload.image) {
       const file = await this.minioService.uploadFile({
         file: payload.image,
         bucket: 'food-menu',
       });
-      image = file.fileName
+      image = file.fileName;
     }
     const newCategoriy = await this.socialModel.create({
-        name: payload.name,
-        image:image,
+      name: payload.name,
+      image: image,
     });
-      newCategoriy.save();
-    }
+    newCategoriy.save();
+  }
 
   async getSocialById(id: string): Promise<Social[]> {
-    await this.#_checkSocial(id)
+    await this.#_checkSocial(id);
     const data = await this.socialModel
-      .find({_id:id})
+      .find({ _id: id })
       .select('name image')
       .exec();
 
-    return data
+    return data;
   }
   async getSocialList(): Promise<Social[]> {
-    const data = await this.socialModel
-      .find()
-      .select('name image')
-      .exec();
+    const data = await this.socialModel.find().select('name image').exec();
 
-    return data
+    return data;
   }
 
   async updateSocial(payload: UpdateSocialInterface): Promise<void> {
-    await this.#_checkSocial(payload.id); 
-    const social = await this.socialModel.findById(payload.id)   
-    if(payload.name){
+    await this.#_checkSocial(payload.id);
+    const social = await this.socialModel.findById(payload.id);
+    if (payload.name) {
       await this.socialModel.findByIdAndUpdate(payload.id, {
-        name:payload.name
-      })
+        name: payload.name,
+      });
     }
-    if(payload.image){
+    if (payload.image) {
       const deleteImageFile = await this.socialModel.findById(payload.id);
-      await this.minioService.removeFile({ fileName: deleteImageFile.image }).catch(undefined => undefined);
+      await this.minioService
+        .removeFile({ fileName: deleteImageFile.image })
+        .catch((undefined) => undefined);
       const file = await this.minioService.uploadFile({
         file: payload.image,
         bucket: 'food-menu',
@@ -81,10 +85,12 @@ export class SocialService {
   async deleteSocial(id: string): Promise<void> {
     await this.#_checkSocial(id);
     const deleteImageFile = await this.socialModel.findById(id);
-    if(deleteImageFile.image){
-          await this.minioService.removeFile({ fileName: deleteImageFile.image }).catch(undefined => undefined);
-        }
-        await this.socialModel.findByIdAndDelete({ _id: id });
+    if (deleteImageFile.image) {
+      await this.minioService
+        .removeFile({ fileName: deleteImageFile.image })
+        .catch((undefined) => undefined);
+    }
+    await this.socialModel.findByIdAndDelete({ _id: id });
   }
 
   async #_checkExistingSocial(name: string): Promise<void> {

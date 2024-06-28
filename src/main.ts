@@ -9,8 +9,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin:"*"
-  })
+    origin: '*',
+  });
 
   app.use(json({ limit: '1024mb' }));
 
